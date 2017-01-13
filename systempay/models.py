@@ -1,22 +1,23 @@
-import urlparse
+# import urlparse
+from urllib.parse import urlparse
 
 from django.db import models
 
 CURRENCIES = (
-        ('36', 'AUD'),
-        ('036', 'AUD'),
-        ('124', 'CAD'),
-        ('156', 'CNY'),
-        ('208', 'DKK'),
-        ('392', 'YEN'),
-        ('578', 'NOK'),
-        ('752', 'SEK'),
-        ('756', 'CHF'),
-        ('826', 'GBP'),
-        ('840', 'USD'),
-        ('953', 'CFP'),
-        ('978', 'EUR'),
-    )
+    ('36', 'AUD'),
+    ('036', 'AUD'),
+    ('124', 'CAD'),
+    ('156', 'CNY'),
+    ('208', 'DKK'),
+    ('392', 'YEN'),
+    ('578', 'NOK'),
+    ('752', 'SEK'),
+    ('756', 'CHF'),
+    ('826', 'GBP'),
+    ('840', 'USD'),
+    ('953', 'CFP'),
+    ('978', 'EUR'),
+)
 
 
 class SystemPayTransaction(models.Model):
@@ -24,17 +25,17 @@ class SystemPayTransaction(models.Model):
     # Mode (send or return) request
     MODE_SUBMIT, MODE_RETURN = ('Submit', 'Return')
     MODE_CHOICES = (
-            (MODE_SUBMIT, u"Submit Request"),
-            (MODE_RETURN, u"Return Request"),
-        )
+        (MODE_SUBMIT, u"Submit Request"),
+        (MODE_RETURN, u"Return Request"),
+    )
     mode = models.CharField(max_length=10, choices=MODE_CHOICES)
 
     OPERATION_TYPE_NONE, OPERATION_TYPE_DEBIT, OPERATION_TYPE_CREDIT = ('', 'DEBIT', 'CREDIT')
     OPERATION_TYPE_CHOICES = (
-            (OPERATION_TYPE_NONE, ''),            
-            (OPERATION_TYPE_DEBIT, 'DEBIT'),
-            (OPERATION_TYPE_CREDIT, 'CREDIT'),
-        )
+        (OPERATION_TYPE_NONE, ''),
+        (OPERATION_TYPE_DEBIT, 'DEBIT'),
+        (OPERATION_TYPE_CREDIT, 'CREDIT'),
+    )
     operation_type = models.CharField(max_length=10, choices=OPERATION_TYPE_CHOICES, blank=True, null=True)
 
     # Unique identifier in the range 000000 to 899999. Integer between 900000 and 999999 are reserved
@@ -109,7 +110,7 @@ class SystemPayTransaction(models.Model):
         form = facade.get_return_form_populated_with_request(request)
         return facade.gateway.compute_signature(form)
 
-    @property 
+    @property
     def currency(self):
         return dict(CURRENCIES).get(self.value('vads_currency'), 'UNKNOWN')
 
