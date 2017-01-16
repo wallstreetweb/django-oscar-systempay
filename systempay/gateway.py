@@ -1,4 +1,4 @@
-import httplib
+import http.client
 import re
 import datetime
 import logging
@@ -7,15 +7,13 @@ from hashlib import sha1
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
+from django.utils.encoding import smart_text
 
-from oscar.apps.payment.exceptions import GatewayError
-
-from systempay.models import SystemPayTransaction
-from systempay.forms import SystemPaySubmitForm, SystemPayReturnForm
-from systempay.utils import format_amount
-from systempay.exceptions import *
+from .forms import SystemPaySubmitForm, SystemPayReturnForm
+from .utils import format_amount
 
 logger = logging.getLogger('systempay')
+
 
 def build_absolute_uri(location):
     scheme = "https"
@@ -65,8 +63,8 @@ class Gateway(object):
         """
         params = form.values_for_signature(form.data)
         sign = '+'.join(params) + '+' + self._certificate
-        #print "sign", sign, sha1(sign).hexdigest()
-        return sha1(sign).hexdigest()
+        # import ipdb;ipdb.set_trace()
+        return sha1(sign.encode(encoding='utf8')).hexdigest()
 
     def is_signature_valid(self, form):
         if form.is_valid():

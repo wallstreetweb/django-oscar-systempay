@@ -1,15 +1,14 @@
 from decimal import Decimal as D
-from urllib import urlencode
+from urllib.parse import urlencode
 import logging
 
 from django.conf import settings
 from django.http import QueryDict
 
-from systempay import gateway
-from systempay.models import SystemPayTransaction
-from systempay.forms import SystemPaySubmitForm, SystemPayReturnForm
-from systempay.utils import printable_form_errors
-from systempay.exceptions import *
+from . import gateway
+from .models import SystemPayTransaction
+from .utils import printable_form_errors
+from .exceptions import *
 
 logger = logging.getLogger('systempay')
 
@@ -21,10 +20,10 @@ class Facade(object):
 
     def __init__(self):
         self.gateway = gateway.Gateway(settings.SYSTEMPAY_SANDBOX_MODE,
-                                       settings.SYSTEMPAY_SITE_ID, 
+                                       settings.SYSTEMPAY_SITE_ID,
                                        settings.SYSTEMPAY_CERTIFICATE,
                                        getattr(settings, 'SYSTEMPAY_ACTION_MODE', 'INTERACTIVE'),
-                                      )
+                                       )
         self.currency = getattr(settings, 'SYSTEMPAY_CURRENCY', 978) # 978 stands for EURO (ISO 639-1)
 
     def get_order_number(self, form):
@@ -52,7 +51,7 @@ class Facade(object):
         params = {}
         params['vads_order_id'] = order.number
 
-        if order.user: 
+        if order.user:
             params['vads_cust_name'] = order.user.get_full_name()
             params['vads_cust_email'] = order.user.email
             params['vads_cust_id'] = order.user.pk
@@ -66,7 +65,7 @@ class Facade(object):
             params['vads_cust_country'] = order.billing_address.country.iso_3166_1_a2
 
         if order.shipping_address:
-            params['vads_ship_to_name'] = order.shipping_address.salutation()
+            params['vads_ship_to_name'] = order.shipping_address.salutation
             params['vads_ship_to_street'] = order.shipping_address.line1 or ""
             params['vads_ship_to_street2'] = order.shipping_address.line2 or ""
             params['vads_ship_to_city'] = order.shipping_address.city or ""
@@ -78,9 +77,9 @@ class Facade(object):
         params.update(kwargs)
 
         form = self.gateway.get_submit_form(
-                order.total_incl_tax, 
-                **params
-            )
+            order.total_incl_tax,
+            **params
+        )
         self.gateway.sign(form)
         return form
 
@@ -111,13 +110,13 @@ class Facade(object):
             txn.error_message = printable_form_errors(form)
             txn.save()
             raise SystemPayFormNotValid("The data received are not complete: %s. See the transaction record #%s for more details" % (
-                    printable_form_errors(form), txn.id)
-                )
+                printable_form_errors(form), txn.id)
+                                        )
 
         if not self.gateway.is_signature_valid(form):
             txn.error_message = u"Signature not valid. Get '%s' vs Expected '%s'" % (
-                    form.cleaned_data['signature'], self.gateway.compute_signature(form) 
-                )
+                form.cleaned_data['signature'], self.gateway.compute_signature(form)
+            )
             txn.save()
             raise SystemPayFormNotValid("The data received are not valid. See the transaction record #%s for more details" % txn.id)
 
@@ -135,10 +134,10 @@ class Facade(object):
             else:
                 raise SystemPayGatewayServerError("Unknown error")
 
-            # TODO handle the ``auth_result`` param
-            # auth_result = self.get_auth_result(form)
-            # if auth_result == '':
-            #     raise SystemPayGatewayError
+                # TODO handle the ``auth_result`` param
+                # auth_result = self.get_auth_result(form)
+                # if auth_result == '':
+                #     raise SystemPayGatewayError
 
         return txn
 
@@ -163,19 +162,20 @@ class Facade(object):
         else:
             d.update(data)
 
+        # TODO: Ensure that values are utf8 encoded
         # ensure data values are utf8 (urlencode requirement)
-        for k in d:
-            if isinstance(d[k], unicode):
-                d[k] = d[k].encode('utf8')
+        # for k in d:
+        #     if isinstance(d[k], unicode):
+        #         d[k] = d[k].encode('utf8')
 
         return SystemPayTransaction.objects.create(
-                mode=mode,
-                operation_type=d.get('vads_operation_type'),
-                trans_id=d.get('vads_trans_id'),
-                trans_date=d.get('vads_trans_date'),
-                order_number=order_number,
-                amount=amount,
-                auth_result=d.get('vads_auth_result'),
-                result=d.get('vads_result'),
-                raw_request=urlencode(d)
-            )
+            mode=mode,
+            operation_type=d.get('vads_operation_type'),
+            trans_id=d.get('vads_trans_id'),
+            trans_date=d.get('vads_trans_date'),
+            order_number=order_number,
+            amount=amount,
+            auth_result=d.get('vads_auth_result'),
+            result=d.get('vads_result'),
+            raw_request=urlencode(d)
+        )

@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from oscar.core.application import Application
 
-from systempay import views
+from . import views
 
 
 class SystemPayApplication(Application):
@@ -20,8 +20,9 @@ class SystemPayApplication(Application):
 
     def get_urls(self):
         urlpatterns = super(SystemPayApplication, self).get_urls()
-        urlpatterns += patterns('',
-            url(r'^secure-redirect$', self.secure_redirect_view.as_view(), name='secure-redirect'),
+        urlpatterns += [
+            url(r'^secure-redirect$', self.secure_redirect_view.as_view(),
+                name='secure-redirect'),
             url(r'^preview$', self.place_order_view.as_view(preview=True),
                 name='preview'),
             url(r'^place-order', self.place_order_view.as_view(),
@@ -33,7 +34,7 @@ class SystemPayApplication(Application):
 
             url(r'^handle-ipn$', csrf_exempt(self.handle_ipn_view.as_view()),
                 name='handle-ipn'),
-        )
+        ]
         return self.post_process_urls(urlpatterns)
 
 

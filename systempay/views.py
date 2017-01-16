@@ -4,7 +4,7 @@ from decimal import Decimal as D
 import logging
 
 from django.conf import settings
-from django.db.models import get_model
+from django.apps import apps
 from django.views import generic
 from django.contrib import messages
 from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseBadRequest
@@ -13,20 +13,22 @@ from django.utils.translation import ugettext_lazy as _
 
 from oscar.core.loading import get_class, get_classes
 
-from systempay.models import SystemPayTransaction
-from systempay.facade import Facade
-from systempay.exceptions import *
+from .models import SystemPayTransaction
+from .facade import Facade
+from .exceptions import *
 
 logger = logging.getLogger('systempay')
 
-Basket = get_model('basket', 'Basket')
-Order = get_model('order', 'Order')
-Source = get_model('payment', 'Source')
-SourceType = get_model('payment', 'SourceType')
+Basket = apps.get_model('basket', 'Basket')
+Order = apps.get_model('order', 'Order')
+Source = apps.get_model('payment', 'Source')
+SourceType = apps.get_model('payment', 'SourceType')
 
-PaymentDetailsView, OrderPlacementMixin, CheckoutSessionMixin = get_classes('checkout.views', 
+PaymentDetailsView, OrderPlacementMixin, CheckoutSessionMixin = get_classes(
+    'checkout.views',
     ['PaymentDetailsView', 'OrderPlacementMixin', 'CheckoutSessionMixin'])
-PaymentError, UnableToTakePayment = get_classes('payment.exceptions', 
+PaymentError, UnableToTakePayment = get_classes(
+    'payment.exceptions',
     ['PaymentError', 'UnableToTakePayment'])
 
 EventHandler = get_class('order.processing', 'EventHandler')
@@ -47,13 +49,16 @@ class SecureRedirectView(CheckoutSessionMixin, generic.DetailView):
         order = None
         if self.request.user.is_superuser:
             if 'order_number' in self.request.GET:
-                order = Order._default_manager.get(number=self.request.GET['order_number'])
+                order = Order._default_manager.get(
+                    number=self.request.GET['order_number'])
             elif 'order_id' in self.request.GET:
-                order = Order._default_manager.get(id=self.request.GET['orderid'])
+                order = Order._default_manager.get(
+                    id=self.request.GET['orderid'])
 
         if not order:
             if 'checkout_order_id' in self.request.session:
-                order = Order._default_manager.get(pk=self.request.session['checkout_order_id'])
+                order = Order._default_manager.get(
+                    pk=self.request.session['checkout_order_id'])
             else:
                 raise Http404(_("No order found"))
 
@@ -86,21 +91,25 @@ class SecureRedirectView(CheckoutSessionMixin, generic.DetailView):
 
 
 class PlaceOrderView(PaymentDetailsView):
-    template_name = 'systempay/preview.html'
+    # template_name = 'systempay/preview.html'
+    template_name = 'checkout/payment_details.html'
     template_name_preview = 'systempay/preview.html'
+    # template_name_preview = 'checkout/preview.html'
     preview = True
 
     def post(self, request, *args, **kwargs):
-        error_response = self.get_error_response()
-
-        if error_response:
-            return error_response
+        # error_response = self.get_error_response()
+        #
+        # if error_response:
+        #     return error_response
         if self.preview:
             # We use a custom parameter to indicate if this is an attempt to place an order.
             # Without this, we assume a payment form is being submitted from the
             # payment-details page
             if request.POST.get('action', '') == 'place_order':
-                return self.submit(request.basket, payment_kwargs={'currency': "EUR"})
+                # params = self.build_submission()
+                # return self.submit(request.basket, payment_kwargs={'currency': "EUR"})
+                return self.submit(**self.build_submission())
             return self.render_preview(request)
 
         # Posting to payment-details isn't the right thing to do
@@ -230,7 +239,7 @@ class HandleIPN(OrderPlacementMixin, generic.View):
     def post(self, request, *args, **kwargs):
         try:
             self.handle_ipn(request)
-        except PaymentError, inst:
+        except PaymentError as inst:
             return HttpResponseBadRequest(inst.message)
         return HttpResponse()
 
@@ -266,9 +275,9 @@ class HandleIPN(OrderPlacementMixin, generic.View):
 
             self.save_payment_details(order)
 
-        except SystemPayError, inst:
+        except SystemPayError as inst:
             logger.error(inst.message)
             #raise PaymentError(inst.message)
-        except Order.DoesNotExist, inst:
+        except Order.DoesNotExist as inst:
             logger.error(_("Unable to retrieve Order #%(order_number)s") % {'order_number': txn.order_number})
             #raise PaymentError(_("Unable to retrieve Order #%(order_number)s") % {'order_number': txn.order_number})

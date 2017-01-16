@@ -1,35 +1,53 @@
 {% extends "checkout/checkout.html" %}
-{% load currency_filters %}
+{% load i18n %}
 
 {% block title %}
-Order preview | {{ block.super }}
+    {% trans "Order preview" %} | {{ block.super }}
 {% endblock %}
 
-{% block checkout-nav %}
-{% include 'checkout/nav.html' with step=3 %}
+{% block checkout_nav %}
+    {% include 'checkout/nav.html' with step=4 %}
 {% endblock %}
 
-{# Null out the actions as they can't be used here #}
-{% block shipping_address_actions %}{% endblock %}
-{% block order_contents_actions %}{% endblock %}
-
-{% block payment_method %}
-<div class="span6">
-    <div class="alert alert-info">
-        <p>Review the information and click on "Pay with SystemPay" at the bottom of the page</p>
-    </div>
-</div>
+{% block checkout_title %}
+    {% trans "Preview order" %}
 {% endblock %}
 
 {% block place_order %}
-<h3>Please review the information above, then click "Place Order"</h3>
-<form method="post" action="{% url systempay:place-order %}">
-    {% csrf_token %}
-    <input type="hidden" name="payer_id" value="{{ payer_id }}" />
-    <input type="hidden" name="token" value="{{ token }}" />
-    <div class="form-actions">
+{#    <form method="post" action="{% url 'checkout:preview' %}" id="place_order_form">#}
+    <form method="post" action="{% url 'systempay:place-order' %}" id="place_order_form">
+        {% csrf_token %}
         <input type="hidden" name="action" value="place_order" />
-        <input id='place-order' type="submit" value="Pay with SystemPay" class="pull-right btn btn-success btn-large js-disable-on-click" />
-    </div>
-</form>
+
+        {% comment %}
+            When submitting sensitive data on the payment details page (eg a bankcard)
+            we don't want to save the data and so we pass the bound form to the preview
+            template and render it in a hidden div.  Then the payment information will
+            get re-submitted when the user confirms the order.
+        {% endcomment %}
+        <div style="display:none">
+            {% block hiddenforms %}{% endblock %}
+        </div>
+
+        <div class="form-group clearfix">
+            <div class="row">
+                <div class="col-sm-3 col-sm-offset-9">
+                     <button id='place-order' type="submit" class="btn btn-primary btn-lg btn-block" data-loading-text="{% trans 'Submitting...' %}">{% trans "Place order" %}</button>
+                </div>
+            </div>
+        </div>
+    </form>
 {% endblock place_order %}
+
+{#{% block place_order %}#}
+{#<h3>Please review the information above, then click "Place Order"</h3>#}
+{#<form method="post" action="{% url "systempay:place-order" %}">#}
+{#    {% csrf_token %}#}
+{#    <input type="hidden" name="payer_id" value="{{ payer_id }}" />#}
+{#    <input type="hidden" name="token" value="{{ token }}" />#}
+{#    <div class="form-actions">#}
+{#        <input type="hidden" name="action" value="place_order" />#}
+{#        <input id='place-order' type="submit" value="Pay with SystemPay" class="pull-right btn btn-success btn-large js-disable-on-click" />#}
+{#    </div>#}
+{#</form>#}
+{#{% endblock place_order %}#}
