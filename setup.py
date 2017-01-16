@@ -5,7 +5,7 @@ from systempay import VERSION
 
 setup(name='django-oscar-systempay',
       version=VERSION,
-      url='https://github.com/peteralaoui/django-oscar-systempay',
+      url='https://github.com/bastien34/django-oscar-systempay.git',
       author="Pierre Dulac",
       author_email="pierre@friendcashapp.com",
       description="SystemPay Cyberplus payment module for django-oscar",
