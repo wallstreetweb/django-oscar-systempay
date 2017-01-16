@@ -22,7 +22,7 @@ setup(name='django-oscar-systempay',
                    'License :: OSI Approved :: BSD License',
                    'Operating System :: Unix',
                    'Programming Language :: Python'],
-      install_requires=['django-oscar>=1.9',
+      install_requires=['django-oscar>=1.3',
                         'requests>=2.10.0',
                         'purl==1.3'],
       )
