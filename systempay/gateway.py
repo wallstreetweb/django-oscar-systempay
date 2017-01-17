@@ -1,4 +1,3 @@
-import http.client
 import re
 import datetime
 import logging
@@ -7,7 +6,6 @@ from hashlib import sha1
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
-from django.utils.encoding import smart_text
 
 from .forms import SystemPaySubmitForm, SystemPayReturnForm
 from .utils import format_amount
@@ -63,7 +61,6 @@ class Gateway(object):
         """
         params = form.values_for_signature(form.data)
         sign = '+'.join(params) + '+' + self._certificate
-        # import ipdb;ipdb.set_trace()
         return sha1(sign.encode(encoding='utf8')).hexdigest()
 
     def is_signature_valid(self, form):
@@ -99,7 +96,7 @@ class Gateway(object):
         :kwargs: additional data, check the fields of the `SystemPaySubmitForm` class to see all possible values.
         """
         data = {}
-        data.update(kwargs) # additionnal data
+        data.update(kwargs)  # additionnal data
 
         # required values
         data['vads_action_mode'] = self._action_mode 
@@ -127,8 +124,10 @@ class Gateway(object):
 
         # optional parameters
         data['vads_return_mode'] = 'GET'
-        data['vads_url_return'] = build_absolute_uri(reverse('systempay:return-response'))
-        data['vads_url_cancel'] = build_absolute_uri(reverse('systempay:cancel-response'))
+        data['vads_url_return'] = build_absolute_uri(
+            reverse('systempay:return-response'))
+        data['vads_url_cancel'] = build_absolute_uri(
+            reverse('systempay:cancel-response'))
 
         return SystemPaySubmitForm(data)
 
@@ -139,4 +138,3 @@ class Gateway(object):
         data = {}
         data.update(kwargs)  # additional init data
         return SystemPayReturnForm(data)
-        

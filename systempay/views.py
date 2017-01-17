@@ -1,5 +1,4 @@
 # encoding: utf-8
-
 from decimal import Decimal as D
 import logging
 
@@ -35,6 +34,10 @@ EventHandler = get_class('order.processing', 'EventHandler')
 
 
 class SecureRedirectView(CheckoutSessionMixin, generic.DetailView):
+    """
+    Initiate the transaction with SystemPay and redirect the user
+    to SystemPay Checkout to perform the transaction.
+    """
     template_name = 'systempay/secure_redirect.html'
     context_object_name = 'order'
 
@@ -121,6 +124,7 @@ class PlaceOrderView(PaymentDetailsView):
         received from server to server.
         Only record the allocated amount.
         """
+        import ipdb;ipdb.set_trace()
         # Record payment source
         payment_method = self.checkout_session.payment_method()
         if payment_method is None:
@@ -162,6 +166,8 @@ class PlaceOrderView(PaymentDetailsView):
 class ResponseView(generic.RedirectView):
     def get_order(self):
         # We allow superusers to force an order thankyou page for testing
+        # http://localhost:8001/systempay/return?vads_amount=330425&vads_auth_mode=FULL&vads_auth_number=3fea71&vads_auth_result=00&vads_capture_delay=0&vads_card_brand=CB&vads_card_number=497010XXXXXX0000&vads_payment_certificate=febb57ed6bb93cc6b3f14a1ccbfb3cee143c4c75&vads_ctx_mode=TEST&vads_currency=978&vads_effective_amount=330425&vads_site_id=21908992&vads_trans_date=20170117115209&vads_trans_id=427300&vads_trans_uuid=c4b5b52c439d44428aba6c489cd87a6c&vads_validation_mode=0&vads_version=V2&vads_warranty_result=YES&vads_payment_src=EC&vads_order_id=100011&vads_order_info=&vads_order_info2=&vads_order_info3=&vads_cust_email=bastien.roques1%40gmail.com&vads_cust_id=1&vads_cust_name=Bastien+Roques&vads_cust_country=&vads_contrib=&vads_user_info=&vads_cust_state=&vads_ship_to_name=jean-s%C3%A9bastien+r%C3%B4ques&vads_ship_to_street=34+rue+roucher&vads_ship_to_street2=34+rue+roucher&vads_ship_to_city=Montpellier&vads_ship_to_zip=34000&vads_ship_to_country=FR&vads_sequence_number=1&vads_contract_used=5591192&vads_trans_status=AUTHORISED&vads_expiry_month=6&vads_expiry_year=2018&vads_bank_product=F&vads_pays_ip=FR&vads_presentation_date=20170117115216&vads_effective_creation_date=20170117115216&vads_operation_type=DEBIT&vads_threeds_enrolled=Y&vads_threeds_cavv=Q2F2dkNhdnZDYXZ2Q2F2dkNhdnY%3D&vads_threeds_eci=05&vads_threeds_xid=UEZPM01tcFVxOUVpSnh0NzB4MTc%3D&vads_threeds_cavvAlgorithm=2&vads_threeds_status=Y&vads_threeds_sign_valid=1&vads_threeds_error_code=&vads_threeds_exit_status=10&vads_risk_control=&vads_result=00&vads_extra_result=&vads_card_country=FR&vads_language=&vads_action_mode=INTERACTIVE&vads_cust_address=&vads_cust_cell_phone=&vads_cust_city=&vads_payment_config=SINGLE&vads_page_action=PAYMENT&vads_cust_phone=&vads_cust_title=&vads_cust_zip=&signature=2a7786d4e622bec989278852910268bd0aabf11f
+
         order = None
         if self.request.user.is_superuser:
             if 'order_number' in self.request.GET:
@@ -296,9 +302,7 @@ class HandleIPN(OrderPlacementMixin, generic.View):
             self.save_payment_details(order)
 
         except SystemPayError as inst:
-            logger.error(inst.message)
-            #raise PaymentError(inst.message)
+            raise inst
         except Order.DoesNotExist as inst:
             logger.error(_("Unable to retrieve Order #%(order_number)s")
                          % {'order_number': txn.order_number})
-            #raise PaymentError(_("Unable to retrieve Order #%(order_number)s") % {'order_number': txn.order_number})
