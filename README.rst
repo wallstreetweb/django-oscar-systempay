@@ -1,6 +1,9 @@
 How to use
 ==========
 
+This is fork of `django-oscar-systempay`, a payment solution intended to be used
+with django-oscar.
+
 Install
 -------
 Install from the github repository.
@@ -34,8 +37,14 @@ Systempay need a context processor to load the bank URL page as well. So in
 
     'systempay.context_processors.gateway'
 
+For testing purpose, you might need to add `LOCAL_SERVER` to your local settings.
 
-**Create a app file in your project as following as following:**
+.. code:: python
+
+    # config/settings/local.py
+    LOCALE_SERVER = True
+
+**Create an app file in your project as following:**
 
 
 .. code:: python
@@ -74,5 +83,25 @@ Systempay need a context processor to load the bank URL page as well. So in
         url(r'', include(application.urls)),
         ]
 
+**Configure `site`**
+
+`Django-oscar-systempay` uses Site to build its urls. So you must configure
+it correctly before testing.
+
+.. code:: python
+
+    from django.contrib.sites.models import Site
+    # we suppose you only have one site here
+    site = Site.objects.first()
+    site.domain = "your.domain.com"
+    site.save()
+
+
+
+Requirements
+------------
+
+`Django-oscar-systempay` is compatible with Python 3 and Django 1.9. No test
+has been done on Python 2.7 for now.
 
 
