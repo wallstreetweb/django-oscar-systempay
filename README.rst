@@ -4,6 +4,10 @@ How to use
 This is fork of `django-oscar-systempay`, a payment solution intended to be used
 with django-oscar.
 
+The current implementation is based on the document V2 available online.
+
+`SystemPay documentation <https://systempay.cyberpluspaiement.com/html/documentation.html>`_
+
 Install
 -------
 Install from the github repository.
