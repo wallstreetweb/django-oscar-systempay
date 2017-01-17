@@ -10,9 +10,9 @@ class ResponseForm(forms.Form):
 
     ACTION_MODE_INTERACTIVE, ACTION_MODE_SILENT = ('INTERACTIVE', 'SILENT')
     ACTION_MODE_CHOICES = (
-            (ACTION_MODE_INTERACTIVE, 'INTERACTIVE'),
-            (ACTION_MODE_SILENT, 'SILENT'),
-        )
+        (ACTION_MODE_INTERACTIVE, 'INTERACTIVE'),
+        (ACTION_MODE_SILENT, 'SILENT'),
+    )
     vads_action_mode = forms.ChoiceField(choices=ACTION_MODE_CHOICES)
     vads_amount = forms.CharField(max_length=12) # NB: expressed in cents for euros (unity undivisible)
     vads_currency = forms.CharField(max_length=3) # 978 stands for EURO (ISO 4217)

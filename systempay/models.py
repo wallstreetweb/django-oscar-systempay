@@ -1,5 +1,5 @@
 # import urlparse
-from urllib.parse import urlparse
+from urllib.parse import parse_qs
 
 from django.db import models
 
@@ -60,10 +60,9 @@ class SystemPayTransaction(models.Model):
     raw_request = models.TextField(max_length=512)
     date_created = models.DateTimeField(auto_now_add=True)
 
-
     class Meta:
         #unique_together = ('trans_id', 'trans_date')
-        ordering = ('-date_created',)
+        ordering = ('-date_created', )
 
     def __unicode__(self):
         if self.mode == self.MODE_SUBMIT:
@@ -87,11 +86,11 @@ class SystemPayTransaction(models.Model):
 
     @property
     def context(self):
-        return urlparse.parse_qs(self.raw_request, keep_blank_values=True)
+        return parse_qs(self.raw_request, keep_blank_values=True)
 
     def value(self, key):
         ctx = self.context
-        return ctx[key][0].decode('utf8') if key in ctx else None
+        return ctx[key][0] if key in ctx else None
 
     def is_complete(self):
         return not self.error_message and self.result == '00'
