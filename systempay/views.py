@@ -117,7 +117,8 @@ class PlaceOrderView(PaymentDetailsView):
 
     def handle_payment(self, order_number, total_incl_tax, **kwargs):
         """
-        Skip this step when placing the order, it'll be handle by the ipn received from server to server.
+        Skip this step when placing the order, it'll be handle by the ipn
+        received from server to server.
         Only record the allocated amount.
         """
         # Record payment source
@@ -126,7 +127,8 @@ class PlaceOrderView(PaymentDetailsView):
             messages.error(self.request, _("Please choose a payment method."))
             return HttpResponseRedirect(reverse('checkout:payment-method'))
 
-        source_type, is_created = SourceType.objects.get_or_create(code=payment_method)
+        source_type, is_created = SourceType.objects.get_or_create(
+            code=payment_method)
         source = Source(source_type=source_type,
                         currency=kwargs.get('currency'),
                         amount_allocated=total_incl_tax,
@@ -135,7 +137,8 @@ class PlaceOrderView(PaymentDetailsView):
 
     def handle_successful_order(self, order, send_confirmation_message=True):
         """
-        Handle the various steps required after an order has been successfully placed.
+        Handle the various steps required after an order has been successfully
+        placed.
 
         Override this view if you want to perform custom actions when an
         order is submitted.
@@ -162,9 +165,11 @@ class ResponseView(generic.RedirectView):
         order = None
         if self.request.user.is_superuser:
             if 'order_number' in self.request.GET:
-                order = Order._default_manager.get(number=self.request.GET['order_number'])
+                order = Order._default_manager.get(
+                    number=self.request.GET['order_number'])
             elif 'order_id' in self.request.GET:
-                order = Order._default_manager.get(id=self.request.GET['orderid'])
+                order = Order._default_manager.get(
+                    id=self.request.GET['orderid'])
 
         if not order:
             order_number = None
@@ -190,19 +195,29 @@ class ReturnResponseView(ResponseView):
 
         # check if the transaction exists
         txns = SystemPayTransaction.objects.filter(
-                mode=SystemPayTransaction.MODE_RETURN, 
-                order_number=order.number
-            ).order_by('-date_created')[:1]
+            mode=SystemPayTransaction.MODE_RETURN,
+            order_number=order.number
+        ).order_by('-date_created')[:1]
 
         if not txns:
-            messages.error(self.request, _("No response received from your bank for the moment. "
-                                       "Be patient, we'll get back to you as soon as we receive it.") )
+            messages.error(
+                self.request,
+                _("No response received from your bank for the moment. "
+                  "Be patient, we'll get back to you as soon as we receive it.")
+            )
         else:
             txn = txns[0]
-            if txn.is_complete(): # check if the transaction has been complete
-                messages.success(self.request, _("Your payment has been successfully validated."))
+            if txn.is_complete():  # check if the transaction has been complete
+                messages.success(
+                    self.request,
+                    _("Your payment has been successfully validated.")
+                )
             else:
-                messages.error(self.request, _("Your payment has been rejected for the reason. You will not be charged. Contact the support for more details."))
+                messages.error(
+                    self.request,
+                    _("Your payment has been rejected for the reason. You will "
+                      "not be charged. Contact the support for more details.")
+                )
 
         self.request.session['checkout_order_id'] = order.id
         return reverse('checkout:thank-you')
@@ -231,7 +246,8 @@ class HandleIPN(OrderPlacementMixin, generic.View):
 
     def get(self, request, *args, **kwargs):
         if request.user and request.user.is_superuser:
-            # Authorize admins for test purpose to copy the GET params to the POST dict
+            # Authorize admins for test purpose to copy the GET params
+            #  to the POST dict
             request.POST = request.GET
             return self.post(request, *args, **kwargs)
         return HttpResponse()
@@ -254,7 +270,9 @@ class HandleIPN(OrderPlacementMixin, generic.View):
             order = Order.objects.get(number=txn.order_number)
 
             # Record payment source
-            source_type, is_created = SourceType.objects.get_or_create(code='systempay')
+            source_type, is_created = SourceType.objects.get_or_create(
+                code='systempay'
+            )
 
             if txn.operation_type == SystemPayTransaction.OPERATION_TYPE_DEBIT:
                 source = Source(source_type=source_type,
@@ -271,7 +289,9 @@ class HandleIPN(OrderPlacementMixin, generic.View):
                                 reference=txn.reference)
                 self.add_payment_source(source)
             else:
-                raise PaymentError(_("Unknown operation type '%(operation_type)s'") % {'operation_type': txn.operation_type})
+                raise PaymentError(
+                    _("Unknown operation type '%(operation_type)s'")
+                    % {'operation_type': txn.operation_type})
 
             self.save_payment_details(order)
 
@@ -279,5 +299,6 @@ class HandleIPN(OrderPlacementMixin, generic.View):
             logger.error(inst.message)
             #raise PaymentError(inst.message)
         except Order.DoesNotExist as inst:
-            logger.error(_("Unable to retrieve Order #%(order_number)s") % {'order_number': txn.order_number})
+            logger.error(_("Unable to retrieve Order #%(order_number)s")
+                         % {'order_number': txn.order_number})
             #raise PaymentError(_("Unable to retrieve Order #%(order_number)s") % {'order_number': txn.order_number})

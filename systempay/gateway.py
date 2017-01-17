@@ -125,7 +125,6 @@ class Gateway(object):
         if self._custom_contracts:
             data['vads_contracts'] = self._custom_contracts
 
-
         # optional parameters
         data['vads_return_mode'] = 'GET'
         data['vads_url_return'] = build_absolute_uri(reverse('systempay:return-response'))
@@ -138,6 +137,6 @@ class Gateway(object):
         Prepopulate the return form with the current request
         """
         data = {}
-        data.update(kwargs) # additonal init data
+        data.update(kwargs)  # additional init data
         return SystemPayReturnForm(data)
         
