@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block extrahead %}
 <style>
@@ -50,7 +50,7 @@
     <div class="hero-unit secure-redirect">
         <h2>Redirection sécurisée</h2>
         <p>Vous allez être redirigé vers la plateforme de paiement Banque Populaire.</p>
-        <img class="loader" src="{{ STATIC_URL }}systempay/img/loader.gif" />
+        <img class="loader" src="{% static "systempay/img/loader.gif" %}" />
 
         <form id="submit-form" method="post" action="{{ SYSTEMPAY_GATEWAY_URL }}">
             {% for field in submit_form %}
