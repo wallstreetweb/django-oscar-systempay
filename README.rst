@@ -45,13 +45,6 @@ Start by adding `systempay` to your `INSTALLED_APPS` settings:
         )
 
 
-For testing purpose, you might need to add `LOCAL_SERVER` to your local settings.
-
-.. code:: python
-
-    # config/settings/local.py
-    LOCALE_SERVER = True
-
 **Create an app file in your project as following:**
 
 
@@ -107,7 +100,6 @@ it correctly before testing.
     site = Site.objects.first()
     site.domain = "your.domain.com"
     site.save()
-
 
 
 Requirements

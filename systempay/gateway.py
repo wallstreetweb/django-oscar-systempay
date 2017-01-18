@@ -14,37 +14,41 @@ logger = logging.getLogger('systempay')
 
 
 def build_absolute_uri(location):
+    """
+    Require use of SSL on production mode.
+    """
     scheme = "https"
-    if getattr(settings, 'LOCAL_SERVER', False) == True:
+    if settings.DEBUG:
         scheme = "http"
     return '%s://%s%s' % (scheme, Site.objects.get_current().domain, location)
 
 
 class Gateway(object):
     """
-    Gateway to make a fine API to interface with the SystemPay gateway of Cyberplus
-
-    The current implementation is based on the document V2 available online.
-    https://systempay.cyberpluspaiement.com/html/Doc/2.2_Guide_d_implementation_formulaire_Paiement_V2.pdf
+    Gateway to make a fine API to interface with the SystemPay gateway
+    of Cyberplus.
     """
 
     URL = "https://paiement.systempay.fr/vads-payment/"
 
-    def __init__(self, sandbox_mode, site_id, certificate, action_mode, version='V2', notify_user_by_email=False,
-            post_on_customer_return=False, custom_contracts=None):
+    def __init__(self, sandbox_mode, site_id, certificate, action_mode,
+                 version='V2', notify_user_by_email=False,
+                 post_on_customer_return=False, custom_contracts=None):
 
-        if sandbox_mode == False:
+        if not sandbox_mode:
             context_mode = 'PRODUCTION'
         else:
             context_mode = 'TEST'
         self._context_mode = context_mode
 
         if not re.match(r'^\d{8}$', str(site_id)):
-            raise RuntimeError("Config `site_id` must contain exactly 8 digits, and is not : '%s'" % site_id)
+            raise RuntimeError("Config `site_id` must contain exactly 8 digits,"
+                               " and is not : '%s'" % site_id)
         self._site_id = site_id
 
         if action_mode not in ('INTERACTIVE', 'SILENT'):
-            raise RuntimeError("Config `action_mode`='%s' is not supported by the current version" % action_mode)
+            raise RuntimeError("Config `action_mode`='%s' is not supported by "
+                               "the current version" % action_mode)
         self._action_mode = action_mode
 
         self._certificate = certificate
@@ -57,7 +61,7 @@ class Gateway(object):
 
     def compute_signature(self, form):
         """
-        Compute the signature according to the doc
+        Compute the signature according to the doc.
         """
         params = form.values_for_signature(form.data)
         sign = '+'.join(params) + '+' + self._certificate
@@ -77,31 +81,33 @@ class Gateway(object):
     def get_trans_id(self):
         """
         Range allowed is between 000000 and 899999.
-        So if we assume that there is only one transaction per seconde, that covers 86400 
-        unique transactions.
-        And to decrease the probability of a collision between two customers at the same second
-        we can use the first digit of the microsecond.
+        So if we assume that there is only one transaction per sec, that
+        covers 86400 unique transactions. And to decrease the probability
+        of a collision between two customers in the very same second we
+        can use the first digit of the microsecond.
 
-        It's not completely bulletproof because it can happen if two person confirm their order 
-        at the same time, same second and the same microsecond.
+        It's not completely bulletproof, two persons might confirm their order
+        in the same time, same second and the same microsecond.
         """
         n = datetime.datetime.utcnow()
         return "%06d" % (n.hour*36000 + n.minute*600 + n.second*10 + n.microsecond/10000)
 
     def get_submit_form(self, amount, **kwargs):
         """
-        Prepopulate the submit form with the data
+        Pre-populate the submit form with the data
 
         :amount: decimal or float amount value of the order
-        :kwargs: additional data, check the fields of the `SystemPaySubmitForm` class to see all possible values.
+        :kwargs: additional data, check the fields of the `SystemPaySubmitForm`
+         class to see all possible values.
         """
         data = {}
-        data.update(kwargs)  # additionnal data
+        data.update(kwargs)
 
         # required values
         data['vads_action_mode'] = self._action_mode 
         data['vads_amount'] = format_amount(amount)
-        data['vads_currency'] = kwargs.get('vads_currency', '978')     # 978 stands for EURO (ISO 639-1)
+        data['vads_currency'] = kwargs.get('vads_currency', '978')  # 978 stands
+        # for EURO (ISO 639-1)
         data['vads_ctx_mode'] = self._context_mode
         data['vads_page_action'] = 'PAYMENT'
         data['vads_payment_config'] = kwargs.get('vads_payment_config', 'SINGLE')
@@ -115,26 +121,38 @@ class Gateway(object):
         if self._notify_user_by_email:
             data['vads_cust_email'] = kwargs.get('user_email', '') 
 
-        # TODO implement those potential settings
-        # if self._post_on_customer_return
-        #     data['vads_return_mode'] = kwargs.get('')
-
         if self._custom_contracts:
             data['vads_contracts'] = self._custom_contracts
 
-        # optional parameters
         data['vads_return_mode'] = 'GET'
+
+        # Return urls (optional): if used, they have precedence on back-office
+        # settings
+        data['vads_url_success'] = build_absolute_uri(
+            reverse('systempay:return-response')
+        )
         data['vads_url_return'] = build_absolute_uri(
-            reverse('systempay:return-response'))
+            reverse('systempay:return-response')
+        )
         data['vads_url_cancel'] = build_absolute_uri(
-            reverse('systempay:cancel-response'))
+            reverse('systempay:cancel-response')
+        )
+        data['vads_url_refused'] = build_absolute_uri(
+            reverse('systempay:cancel-response')
+        )
+
+        # Automatic return
+        data['vads_redirect_success_timeout'] = '3'
+        data['vads_redirect_success_message'] = "You're going to be redirect " \
+                                                "to %s" % settings.OSCAR_SHOP_NAME
+        data['vads_redirect_error_timeout'] = '3'
 
         return SystemPaySubmitForm(data)
 
     def get_return_form(self, **kwargs):
         """
-        Prepopulate the return form with the current request
+        Pre-populate the return form with the current request
         """
-        data = {}
+        data = dict()
         data.update(kwargs)  # additional init data
         return SystemPayReturnForm(data)

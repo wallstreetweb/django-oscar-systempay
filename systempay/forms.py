@@ -19,9 +19,9 @@ class ResponseForm(forms.Form):
 
     CONTEXT_TEST, CONTEXT_PRODUCTION = ('TEST', 'PRODUCTION')
     CONTEXT_CHOICES = (
-            (CONTEXT_TEST, u"TEST"),
-            (CONTEXT_PRODUCTION, u"PRODUCTION")
-        )
+        (CONTEXT_TEST, u"TEST"),
+        (CONTEXT_PRODUCTION, u"PRODUCTION")
+    )
     vads_ctx_mode = forms.ChoiceField(choices=CONTEXT_CHOICES)
 
     # needs to be formated as SINGLE or MULTI:first=val1;count=val2;period=val3
@@ -94,10 +94,10 @@ class SystemPaySubmitForm(ResponseForm):
 
     RETURN_MODE_NONE, RETURN_MODE_GET, RETURN_MODE_POST = ('NONE', 'GET', 'POST')
     RETURN_MODE_CHOICES = (
-            (RETURN_MODE_NONE, 'NONE'),
-            (RETURN_MODE_GET, 'GET'),
-            (RETURN_MODE_POST, 'POST'),
-        )
+        (RETURN_MODE_NONE, 'NONE'),
+        (RETURN_MODE_GET, 'GET'),
+        (RETURN_MODE_POST, 'POST'),
+    )
     vads_return_mode = forms.ChoiceField(choices=RETURN_MODE_CHOICES, required=False)
 
     vads_theme_config = forms.CharField(max_length=255, required=False) # Can be used to customize the aspect of the transaction page
@@ -137,9 +137,9 @@ class SystemPayReturnForm(ResponseForm):
 
     AUTH_MODE_MARK, AUTH_MODE_FULL = ('MARK', 'FULL')
     AUTH_MODE_CHOICES = (
-            (AUTH_MODE_MARK, u"MARK"),
-            (AUTH_MODE_FULL, u"FULL")
-        )
+        (AUTH_MODE_MARK, u"MARK"),
+        (AUTH_MODE_FULL, u"FULL")
+    )
     vads_auth_mode = forms.ChoiceField(choices=AUTH_MODE_CHOICES)
     vads_auth_number = forms.CharField(min_length=6, max_length=6, required=False)
 
@@ -150,10 +150,10 @@ class SystemPayReturnForm(ResponseForm):
 
     OPERATION_TYPE_EMPTY, OPERATION_TYPE_DEBIT, OPERATION_TYPE_CREDIT = ('', 'DEBIT', 'CREDIT')
     OPERATION_TYPE_CHOICES = (
-            (OPERATION_TYPE_EMPTY, ''),
-            (OPERATION_TYPE_DEBIT, 'DEBIT'),
-            (OPERATION_TYPE_CREDIT, 'CREDIT'),
-        )
+        (OPERATION_TYPE_EMPTY, ''),
+        (OPERATION_TYPE_DEBIT, 'DEBIT'),
+        (OPERATION_TYPE_CREDIT, 'CREDIT'),
+    )
     vads_operation_type = forms.CharField(max_length=8, required=False)
 
     vads_sequence_number = forms.CharField(max_length=3, required=False)
@@ -168,31 +168,31 @@ class SystemPayReturnForm(ResponseForm):
     TRANS_STATUS_WAITING_AUTHORISATION_TO_VALIDATE = 'WAITING_AUTHORISATION_TO_VALIDATE'
     TRANS_STATUS_CAPTURED = 'CAPTURED'
     TRANS_STATUS_CHOICES = (
-            (TRANS_STATUS_ABANDONED, 'ABANDONED'),
-            (TRANS_STATUS_AUTHORISED, 'AUTHORISED'),
-            (TRANS_STATUS_REFUSED, 'REFUSED'),
-            (TRANS_STATUS_AUTHORISED_TO_VALIDATE, 'AUTHORISED_TO_VALIDATE'),
-            (TRANS_STATUS_WAITING_AUTHORISATION, 'WAITING_AUTHORISATION'),
-            (TRANS_STATUS_EXPIRED, 'EXPIRED'),
-            (TRANS_STATUS_CANCELLED, 'CANCELLED'),
-            (TRANS_STATUS_WAITING_AUTHORISATION_TO_VALIDATE, 'WAITING_AUTHORISATION_TO_VALIDATE'),
-            (TRANS_STATUS_CAPTURED, 'CAPTURED'),
-        )
+        (TRANS_STATUS_ABANDONED, 'ABANDONED'),
+        (TRANS_STATUS_AUTHORISED, 'AUTHORISED'),
+        (TRANS_STATUS_REFUSED, 'REFUSED'),
+        (TRANS_STATUS_AUTHORISED_TO_VALIDATE, 'AUTHORISED_TO_VALIDATE'),
+        (TRANS_STATUS_WAITING_AUTHORISATION, 'WAITING_AUTHORISATION'),
+        (TRANS_STATUS_EXPIRED, 'EXPIRED'),
+        (TRANS_STATUS_CANCELLED, 'CANCELLED'),
+        (TRANS_STATUS_WAITING_AUTHORISATION_TO_VALIDATE, 'WAITING_AUTHORISATION_TO_VALIDATE'),
+        (TRANS_STATUS_CAPTURED, 'CAPTURED'),
+    )
     vads_trans_status = forms.ChoiceField(choices=TRANS_STATUS_CHOICES, required=False)
 
     WARRANTY_RESULT_EMPTY, WARRANTY_RESULT_YES, WARRANTY_RESULT_NO, WARRANTY_RESULT_UNKNOWN = (
-            '', 'YES', 'NO', 'UNKNOWN'
-        )
+        '', 'YES', 'NO', 'UNKNOWN'
+    )
     WARRANTY_RESULT_CHOICES = (
-            (WARRANTY_RESULT_EMPTY, u""),
-            (WARRANTY_RESULT_YES, u"YES"),
-            (WARRANTY_RESULT_NO, u"NO"),
-            (WARRANTY_RESULT_UNKNOWN, u"UNKNOWN"),
-        )
+        (WARRANTY_RESULT_EMPTY, u""),
+        (WARRANTY_RESULT_YES, u"YES"),
+        (WARRANTY_RESULT_NO, u"NO"),
+        (WARRANTY_RESULT_UNKNOWN, u"UNKNOWN"),
+    )
     vads_warranty_result = forms.ChoiceField(choices=WARRANTY_RESULT_CHOICES, required=False)
     vads_payment_certificate = forms.CharField(max_length=40, required=False)
     vads_result = forms.CharField(min_length=2, max_length=2, required=False)
-    
+
     # Used only for pear to pear communication (like the payment notification communicate from server to server)
     vads_hash = forms.CharField(max_length=255, required=False)
 
