@@ -51,7 +51,7 @@ class Facade(object):
         :kwargs: additional data, check the fields of the `SystemPaySubmitForm`
         class to see all possible values.
         """
-        params = dict()
+        params = {}
         params['vads_order_id'] = order.number
 
         if order.user:
@@ -76,7 +76,6 @@ class Facade(object):
             params['vads_ship_to_zip'] = order.shipping_address.postcode or ""
             params['vads_ship_to_country'] = order.shipping_address.country.iso_3166_1_a2
 
-        # update with custom params
         params.update(kwargs)
 
         form = self.gateway.get_submit_form(

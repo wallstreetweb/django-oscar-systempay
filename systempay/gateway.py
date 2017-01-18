@@ -3,6 +3,7 @@ import datetime
 import logging
 from hashlib import sha1
 
+from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
@@ -142,10 +143,10 @@ class Gateway(object):
         )
 
         # Automatic return
-        data['vads_redirect_success_timeout'] = '3'
-        data['vads_redirect_success_message'] = "You're going to be redirect " \
-                                                "to %s" % settings.OSCAR_SHOP_NAME
-        data['vads_redirect_error_timeout'] = '3'
+        data['vads_redirect_success_timeout'] = 5
+        msg = _("You're going to be redirect to %s")
+        data['vads_redirect_success_message'] = msg % settings.OSCAR_SHOP_NAME
+        data['vads_redirect_error_timeout'] = 5
 
         return SystemPaySubmitForm(data)
 

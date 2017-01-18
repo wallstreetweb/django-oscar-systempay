@@ -57,8 +57,8 @@ class ResponseForm(forms.Form):
     vads_cust_id = forms.CharField(max_length=63, required=False)
     vads_cust_name = forms.CharField(max_length=127, required=False)
     vads_cust_cell_phone = forms.CharField(max_length=32, required=False)
-    vads_cust_phone  = forms.CharField(max_length=32, required=False)
-    vads_cust_title  = forms.CharField(max_length=63, required=False)
+    vads_cust_phone = forms.CharField(max_length=32, required=False)
+    vads_cust_title = forms.CharField(max_length=63, required=False)
     vads_cust_city = forms.CharField(max_length=63, required=False)
     vads_cust_status = forms.CharField(max_length=63, required=False)
     vads_cust_state = forms.CharField(max_length=63, required=False)
@@ -79,8 +79,6 @@ class ResponseForm(forms.Form):
         return sorted(p for p in self.signature_params(data) if p.startswith('vads_'))
 
     def values_for_signature(self, data):
-        # l = map( unicode, (data.get(param, '') for param in self.sorted_signature_params(data)))
-        # return tuple( map( lambda a: a.encode('utf8'), l) )
         # TODO: why force_text and smart_text works the same ?
         return tuple([force_text(data.get(param, ''), encoding='utf8')
                       for param in self.sorted_signature_params(data)])
@@ -98,9 +96,10 @@ class SystemPaySubmitForm(ResponseForm):
         (RETURN_MODE_GET, 'GET'),
         (RETURN_MODE_POST, 'POST'),
     )
-    vads_return_mode = forms.ChoiceField(choices=RETURN_MODE_CHOICES, required=False)
+    vads_return_mode = forms.ChoiceField(choices=RETURN_MODE_CHOICES,
+                                         required=False)
 
-    vads_theme_config = forms.CharField(max_length=255, required=False) # Can be used to customize the aspect of the transaction page
+    vads_theme_config = forms.CharField(max_length=255, required=False)
 
     vads_url_success = forms.CharField(max_length=127, required=False)
     vads_url_referral = forms.CharField(max_length=127, required=False)
@@ -112,10 +111,10 @@ class SystemPaySubmitForm(ResponseForm):
     vads_user_info = forms.CharField(max_length=255, required=False)
     vads_contracts = forms.CharField(max_length=255, required=False)
 
-    redirect_success_timeout = forms.CharField(max_length=3, required=False)
-    redirect_success_message = forms.CharField(max_length=255, required=False)
-    redirect_error_timeout = forms.CharField(max_length=3, required=False)
-    redirect_error_message = forms.CharField(max_length=255, required=False)
+    vads_redirect_success_timeout = forms.CharField(max_length=3, required=False)
+    vads_redirect_success_message = forms.CharField(max_length=255, required=False)
+    vads_redirect_error_timeout = forms.CharField(max_length=3, required=False)
+    vads_redirect_error_message = forms.CharField(max_length=255, required=False)
 
     vads_ship_to_city = forms.CharField(max_length=63, required=False)
     vads_ship_to_country = forms.CharField(max_length=2, required=False)
@@ -165,7 +164,8 @@ class SystemPayReturnForm(ResponseForm):
     TRANS_STATUS_WAITING_AUTHORISATION = 'WAITING_AUTHORISATION'
     TRANS_STATUS_EXPIRED = 'EXPIRED'
     TRANS_STATUS_CANCELLED = 'CANCELLED'
-    TRANS_STATUS_WAITING_AUTHORISATION_TO_VALIDATE = 'WAITING_AUTHORISATION_TO_VALIDATE'
+    TRANS_STATUS_WAITING_AUTHORISATION_TO_VALIDATE = \
+        'WAITING_AUTHORISATION_TO_VALIDATE'
     TRANS_STATUS_CAPTURED = 'CAPTURED'
     TRANS_STATUS_CHOICES = (
         (TRANS_STATUS_ABANDONED, 'ABANDONED'),
@@ -175,25 +175,29 @@ class SystemPayReturnForm(ResponseForm):
         (TRANS_STATUS_WAITING_AUTHORISATION, 'WAITING_AUTHORISATION'),
         (TRANS_STATUS_EXPIRED, 'EXPIRED'),
         (TRANS_STATUS_CANCELLED, 'CANCELLED'),
-        (TRANS_STATUS_WAITING_AUTHORISATION_TO_VALIDATE, 'WAITING_AUTHORISATION_TO_VALIDATE'),
+        (TRANS_STATUS_WAITING_AUTHORISATION_TO_VALIDATE,
+         'WAITING_AUTHORISATION_TO_VALIDATE'),
         (TRANS_STATUS_CAPTURED, 'CAPTURED'),
     )
-    vads_trans_status = forms.ChoiceField(choices=TRANS_STATUS_CHOICES, required=False)
+    vads_trans_status = forms.ChoiceField(
+        choices=TRANS_STATUS_CHOICES, required=False)
 
-    WARRANTY_RESULT_EMPTY, WARRANTY_RESULT_YES, WARRANTY_RESULT_NO, WARRANTY_RESULT_UNKNOWN = (
-        '', 'YES', 'NO', 'UNKNOWN'
-    )
+    WARRANTY_RESULT_EMPTY, WARRANTY_RESULT_YES, WARRANTY_RESULT_NO, \
+        WARRANTY_RESULT_UNKNOWN = ('', 'YES', 'NO', 'UNKNOWN')
+
     WARRANTY_RESULT_CHOICES = (
         (WARRANTY_RESULT_EMPTY, u""),
         (WARRANTY_RESULT_YES, u"YES"),
         (WARRANTY_RESULT_NO, u"NO"),
         (WARRANTY_RESULT_UNKNOWN, u"UNKNOWN"),
     )
-    vads_warranty_result = forms.ChoiceField(choices=WARRANTY_RESULT_CHOICES, required=False)
+    vads_warranty_result = forms.ChoiceField(
+        choices=WARRANTY_RESULT_CHOICES, required=False)
     vads_payment_certificate = forms.CharField(max_length=40, required=False)
     vads_result = forms.CharField(min_length=2, max_length=2, required=False)
 
-    # Used only for pear to pear communication (like the payment notification communicate from server to server)
+    # Used only for pear to pear communication (like the payment notification
+    #  communicate from server to server)
     vads_hash = forms.CharField(max_length=255, required=False)
 
     vads_contract_used = forms.CharField(max_length=250, required=False)
