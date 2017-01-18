@@ -14,6 +14,7 @@ from oscar.core.loading import get_class, get_classes
 
 from .models import SystemPayTransaction
 from .facade import Facade
+from .gateway import Gateway
 from .exceptions import *
 
 logger = logging.getLogger('systempay')
@@ -90,6 +91,7 @@ class SecureRedirectView(CheckoutSessionMixin, generic.DetailView):
     def get_context_data(self, **kwargs):
         ctx = super(SecureRedirectView, self).get_context_data(**kwargs)
         ctx['submit_form'] = self.get_form()
+        ctx['SYSTEMPAY_GATEWAY_URL'] = Gateway.URL
         return ctx
 
 
@@ -124,7 +126,6 @@ class PlaceOrderView(PaymentDetailsView):
         received from server to server.
         Only record the allocated amount.
         """
-        import ipdb;ipdb.set_trace()
         # Record payment source
         payment_method = self.checkout_session.payment_method()
         if payment_method is None:

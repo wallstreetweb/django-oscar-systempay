@@ -2,7 +2,7 @@ How to use
 ==========
 
 This is fork of `django-oscar-systempay`, a payment solution intended to be used
-with django-oscar.
+with django-oscar and Natixis Bank Systempay.
 
 The current implementation is based on the document V2 available online.
 
@@ -10,20 +10,30 @@ The current implementation is based on the document V2 available online.
 
 Install
 -------
+
 Install from the github repository.
 
     ``pip install git+https://github.com/bastien34/django-oscar-systempay.git``
 
+The configuration will consist in few steps:
+
+1. Add `systempay` to your `INSTALLED_APPS` settings
+
+2. Config your urls app project
+
+3. Migrate
+
+
 Config
 ------
 
-To integrate systempay to your oscar project, you need to overwrite the root app
+First to integrate systempay to your oscar project, you need to overwrite the root app
 in order to include the bench of urls used for systempay.
 
 `Override the root app <http://django-oscar.readthedocs.io/en/releases-1.3/howto/how_to_change_a_url.html?highlight=urls#changing-the-root-app>`_
 
 
-**Settings `INSTALLED_APPS` and `context_processors`**
+**Settings `INSTALLED_APPS`**
 
 Start by adding `systempay` to your `INSTALLED_APPS` settings:
 
@@ -34,12 +44,6 @@ Start by adding `systempay` to your `INSTALLED_APPS` settings:
             'systempay',
         )
 
-Systempay need a context processor to load the bank URL page as well. So in
-`TEMPLATES` add the systempay context processor:
-
-.. code:: python
-
-    'systempay.context_processors.gateway'
 
 For testing purpose, you might need to add `LOCAL_SERVER` to your local settings.
 
@@ -86,6 +90,10 @@ For testing purpose, you might need to add `LOCAL_SERVER` to your local settings
         ...
         url(r'', include(application.urls)),
         ]
+
+**Run migrations**
+
+    ``./manage.py migrate``
 
 **Configure `site`**
 
