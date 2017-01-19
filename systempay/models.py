@@ -63,17 +63,11 @@ class SystemPayTransaction(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # unique_together = ('trans_id', 'trans_date')
+        unique_together = (('trans_id', 'trans_date'), )
         ordering = ('-date_created', )
 
-    def __str__(self):
-        if self.mode == self.MODE_SUBMIT:
-            return "SUBMIT request trans_id: %s" % (self.trans_id,)
-        elif self.mode == self.MODE_RETURN:
-            return "RETURN request trans_id: %s" % (self.trans_id,)
-        return u"UNKNOWN request mode"
-
     def save(self, *args, **kwargs):
+
         return super(SystemPayTransaction, self).save(*args, **kwargs)
 
     def request(self):
@@ -118,4 +112,11 @@ class SystemPayTransaction(models.Model):
     @property
     def reference(self):
         return "%s%s" % (self.trans_date, self.trans_id)
+
+    def __str__(self):
+        if self.mode == self.MODE_SUBMIT:
+            return "SUBMIT request trans_id: %s" % (self.trans_id,)
+        elif self.mode == self.MODE_RETURN:
+            return "RETURN request trans_id: %s" % (self.trans_id,)
+        return u"UNKNOWN request mode"
 

@@ -245,10 +245,13 @@ class HandleIPN(OrderPlacementMixin, generic.View):
             # Authorize admins for test purpose to copy the GET params
             #  to the POST dict
             request.POST = request.GET
+            from .test_vars import POST_DATA
+            request.POST = POST_DATA
             return self.post(request, *args, **kwargs)
         return HttpResponse()
 
     def post(self, request, *args, **kwargs):
+        print(request.POST)
         try:
             self.handle_ipn(request)
         except PaymentError as inst:
@@ -258,8 +261,6 @@ class HandleIPN(OrderPlacementMixin, generic.View):
     def handle_ipn(self, request, **kwargs):
         """
         Complete payment.
-
-        TODO: Avoid duplicate transaction.
         """
         txn = None
         try:
@@ -294,8 +295,8 @@ class HandleIPN(OrderPlacementMixin, generic.View):
 
             self.save_payment_details(order)
 
-        except SystemPayError as inst:
-            raise inst
+        except SystemPayError:
+            raise
         except Order.DoesNotExist:
             logger.error(_("Unable to retrieve Order #%(order_number)s")
                          % {'order_number': txn.order_number})
