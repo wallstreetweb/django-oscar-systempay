@@ -245,8 +245,6 @@ class HandleIPN(OrderPlacementMixin, generic.View):
             # Authorize admins for test purpose to copy the GET params
             #  to the POST dict
             request.POST = request.GET
-            from .test_vars import POST_DATA
-            request.POST = POST_DATA
             return self.post(request, *args, **kwargs)
         return HttpResponse()
 
