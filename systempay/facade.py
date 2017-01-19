@@ -51,7 +51,8 @@ class Facade(object):
         :kwargs: additional data, check the fields of the `SystemPaySubmitForm`
         class to see all possible values.
         """
-        params = {}
+        params = dict()
+
         params['vads_order_id'] = order.number
 
         if order.user:
@@ -65,7 +66,8 @@ class Facade(object):
             params['vads_cust_city'] = order.billing_address.city or ""
             params['vads_cust_state'] = order.billing_address.state or ""
             params['vads_cust_zip'] = order.billing_address.postcode or ""
-            params['vads_cust_country'] = order.billing_address.country.iso_3166_1_a2
+            params['vads_cust_country'] = order.billing_address.country.\
+                iso_3166_1_a2
 
         if order.shipping_address:
             params['vads_ship_to_name'] = order.shipping_address.salutation
@@ -74,7 +76,8 @@ class Facade(object):
             params['vads_ship_to_city'] = order.shipping_address.city or ""
             params['vads_ship_to_state'] = order.shipping_address.state or ""
             params['vads_ship_to_zip'] = order.shipping_address.postcode or ""
-            params['vads_ship_to_country'] = order.shipping_address.country.iso_3166_1_a2
+            params['vads_ship_to_country'] = order.shipping_address.country.\
+                iso_3166_1_a2
 
         params.update(kwargs)
 
@@ -101,7 +104,7 @@ class Facade(object):
 
             OR
 
-            2. a notification of payment issued from SytemPay server to
+            2. a notification of payment issued from SystemPay server to
             our server
 
         In both cases the data will be POST data, the only difference is
@@ -151,11 +154,6 @@ class Facade(object):
             else:
                 raise SystemPayGatewayServerError("Unknown error")
 
-                # TODO handle the ``auth_result`` param
-                # auth_result = self.get_auth_result(form)
-                # if auth_result == '':
-                #     raise SystemPayGatewayError
-
         return txn
 
     def record_submit_txn(self, order_number, amount, form):
@@ -167,7 +165,7 @@ class Facade(object):
     def record_return_txn(self, order_number, amount, request):
         """
         Record the transaction in the database to be able to track
-        everything we received
+        everything we received.
         """
         return self.record_txn(order_number,
                                amount,
@@ -177,7 +175,7 @@ class Facade(object):
     def record_txn(self, order_number, amount, data, mode):
         """
         Record the transaction in the database to be able to track
-        everything we received
+        everything we received.
         """
         # convert the QueryDict into a dict
         d = {}
@@ -186,12 +184,6 @@ class Facade(object):
                 d[k] = data.get(k)
         else:
             d.update(data)
-
-        # TODO: Ensure that values are utf8 encoded
-        # ensure data values are utf8 (urlencode requirement)
-        # for k in d:
-        #     if isinstance(d[k], unicode):
-        #         d[k] = d[k].encode('utf8')
 
         return SystemPayTransaction.objects.create(
             mode=mode,

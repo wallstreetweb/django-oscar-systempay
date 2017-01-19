@@ -1,8 +1,10 @@
 class SystemPayError(Exception):
     pass
 
+
 class SystemPayFormNotValid(SystemPayError):
     pass
+
 
 class SystemPayGatewayParamError(SystemPayError):
 

@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.encoding import smart_text, force_text
+from django.utils.encoding import force_text
 
 
 class ResponseForm(forms.Form):
@@ -14,8 +14,10 @@ class ResponseForm(forms.Form):
         (ACTION_MODE_SILENT, 'SILENT'),
     )
     vads_action_mode = forms.ChoiceField(choices=ACTION_MODE_CHOICES)
-    vads_amount = forms.CharField(max_length=12) # NB: expressed in cents for euros (unity undivisible)
-    vads_currency = forms.CharField(max_length=3) # 978 stands for EURO (ISO 4217)
+    vads_amount = forms.CharField(max_length=12)  # NB: expressed in cents for
+    #  euros (unity indivisible)
+    vads_currency = forms.CharField(max_length=3)  # 978 stands for
+    # EURO (ISO 4217)
 
     CONTEXT_TEST, CONTEXT_PRODUCTION = ('TEST', 'PRODUCTION')
     CONTEXT_CHOICES = (
@@ -24,13 +26,14 @@ class ResponseForm(forms.Form):
     )
     vads_ctx_mode = forms.ChoiceField(choices=CONTEXT_CHOICES)
 
-    # needs to be formated as SINGLE or MULTI:first=val1;count=val2;period=val3
+    # needs to be formatted as SINGLE or MULTI:first=val1;count=val2;period=val3
     # example: MULTI:first=5000;count=3;period=30 
     #          would represent a payment segmented with a first account of 50,00
-    #          then the rest of the amount would be divided in (count-1) other payments
-    #          with a timelapse of 30 days between them
+    #          then the rest of the amount would be divided in (count-1) other
+    #          payments with a time lapse of 30 days between them
     #
-    # NB: if the validity date of the credit card can't handle the last payment (in case of multi)
+    # NB: if the validity date of the credit card can't handle the last payment
+    # (in case of multi)
     #     the whole transaction will be rejected
     vads_payment_config = forms.CharField(max_length=127)
 
@@ -39,7 +42,8 @@ class ResponseForm(forms.Form):
     # Need to respect the format ``YYYYMMDDHHMMSS`` in UTC timezone
     vads_trans_date = forms.CharField(min_length=14, max_length=14)
 
-    # Unique identifier in the range 000000 to 899999. Integer between 900000 and 999999 are reserved
+    # Unique identifier in the range 000000 to 899999. Integer between 900000
+    # and 999999 are reserved
     # NB: it should only be unique over the current day
     vads_trans_id = forms.CharField(min_length=6, max_length=6)
     vads_version = forms.CharField(max_length=8)
@@ -76,10 +80,10 @@ class ResponseForm(forms.Form):
         raise NotImplementedError
 
     def sorted_signature_params(self, data):
-        return sorted(p for p in self.signature_params(data) if p.startswith('vads_'))
+        return sorted(p for p in self.signature_params(data)
+                      if p.startswith('vads_'))
 
     def values_for_signature(self, data):
-        # TODO: why force_text and smart_text works the same ?
         return tuple([force_text(data.get(param, ''), encoding='utf8')
                       for param in self.sorted_signature_params(data)])
 
@@ -111,10 +115,13 @@ class SystemPaySubmitForm(ResponseForm):
     vads_user_info = forms.CharField(max_length=255, required=False)
     vads_contracts = forms.CharField(max_length=255, required=False)
 
-    vads_redirect_success_timeout = forms.CharField(max_length=3, required=False)
-    vads_redirect_success_message = forms.CharField(max_length=255, required=False)
+    vads_redirect_success_timeout = forms.CharField(max_length=3,
+                                                    required=False)
+    vads_redirect_success_message = forms.CharField(max_length=255,
+                                                    required=False)
     vads_redirect_error_timeout = forms.CharField(max_length=3, required=False)
-    vads_redirect_error_message = forms.CharField(max_length=255, required=False)
+    vads_redirect_error_message = forms.CharField(max_length=255,
+                                                  required=False)
 
     vads_ship_to_city = forms.CharField(max_length=63, required=False)
     vads_ship_to_country = forms.CharField(max_length=2, required=False)
@@ -132,7 +139,8 @@ class SystemPaySubmitForm(ResponseForm):
 class SystemPayReturnForm(ResponseForm):
 
     vads_effective_amount = forms.CharField(max_length=14, required=False)
-    vads_auth_result = forms.CharField(min_length=2, max_length=2, required=False)
+    vads_auth_result = forms.CharField(min_length=2, max_length=2,
+                                       required=False)
 
     AUTH_MODE_MARK, AUTH_MODE_FULL = ('MARK', 'FULL')
     AUTH_MODE_CHOICES = (
@@ -140,14 +148,17 @@ class SystemPayReturnForm(ResponseForm):
         (AUTH_MODE_FULL, u"FULL")
     )
     vads_auth_mode = forms.ChoiceField(choices=AUTH_MODE_CHOICES)
-    vads_auth_number = forms.CharField(min_length=6, max_length=6, required=False)
+    vads_auth_number = forms.CharField(min_length=6, max_length=6,
+                                       required=False)
 
     vads_card_brand = forms.CharField(max_length=127, required=False)
     vads_card_number = forms.CharField(max_length=19, required=False)
 
-    vads_extra_result = forms.CharField(min_length=2, max_length=2, required=False)
+    vads_extra_result = forms.CharField(min_length=2, max_length=2,
+                                        required=False)
 
-    OPERATION_TYPE_EMPTY, OPERATION_TYPE_DEBIT, OPERATION_TYPE_CREDIT = ('', 'DEBIT', 'CREDIT')
+    OPERATION_TYPE_EMPTY, OPERATION_TYPE_DEBIT, OPERATION_TYPE_CREDIT = (
+        '', 'DEBIT', 'CREDIT')
     OPERATION_TYPE_CHOICES = (
         (OPERATION_TYPE_EMPTY, ''),
         (OPERATION_TYPE_DEBIT, 'DEBIT'),

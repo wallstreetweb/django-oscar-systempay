@@ -1,4 +1,3 @@
-# import urlparse
 from urllib.parse import parse_qs
 
 from django.db import models
@@ -30,15 +29,18 @@ class SystemPayTransaction(models.Model):
     )
     mode = models.CharField(max_length=10, choices=MODE_CHOICES)
 
-    OPERATION_TYPE_NONE, OPERATION_TYPE_DEBIT, OPERATION_TYPE_CREDIT = ('', 'DEBIT', 'CREDIT')
+    OPERATION_TYPE_NONE, OPERATION_TYPE_DEBIT, \
+        OPERATION_TYPE_CREDIT = ('', 'DEBIT', 'CREDIT')
     OPERATION_TYPE_CHOICES = (
         (OPERATION_TYPE_NONE, ''),
         (OPERATION_TYPE_DEBIT, 'DEBIT'),
         (OPERATION_TYPE_CREDIT, 'CREDIT'),
     )
-    operation_type = models.CharField(max_length=10, choices=OPERATION_TYPE_CHOICES, blank=True, null=True)
+    operation_type = models.CharField(
+        max_length=10, choices=OPERATION_TYPE_CHOICES, blank=True, null=True)
 
-    # Unique identifier in the range 000000 to 899999. Integer between 900000 and 999999 are reserved
+    # Unique identifier in the range 000000 to 899999. Integer between
+    # 900000 and 999999 are reserved
     # NB: it should only be unique over the current day
     trans_id = models.CharField(max_length=6, blank=True, null=True)
 
@@ -61,14 +63,14 @@ class SystemPayTransaction(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        #unique_together = ('trans_id', 'trans_date')
+        # unique_together = ('trans_id', 'trans_date')
         ordering = ('-date_created', )
 
-    def __unicode__(self):
+    def __str__(self):
         if self.mode == self.MODE_SUBMIT:
-            return u"SUBMIT request trans_id: %s" % (self.trans_id,)
+            return "SUBMIT request trans_id: %s" % (self.trans_id,)
         elif self.mode == self.MODE_RETURN:
-            return u"RETURN request trans_id: %s" % (self.trans_id,)
+            return "RETURN request trans_id: %s" % (self.trans_id,)
         return u"UNKNOWN request mode"
 
     def save(self, *args, **kwargs):

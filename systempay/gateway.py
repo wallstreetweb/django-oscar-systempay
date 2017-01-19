@@ -154,6 +154,6 @@ class Gateway(object):
         """
         Pre-populate the return form with the current request
         """
-        data = dict()
-        data.update(kwargs)  # additional init data
+        data = {}
+        data.update(kwargs)
         return SystemPayReturnForm(data)

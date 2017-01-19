@@ -13,3 +13,4 @@ django_oscar_systempay.egg-info/
 TODO
 docs/_build
 *.py[oc]
+test_vars.py
