@@ -10,4 +10,5 @@ def format_amount(amount):
 
 
 def printable_form_errors(form):
-    return u' / '.join([u"%s: %s" % (f.name, '. '.join(f.errors)) for f in form])
+    return ' / '.join([u"%s: %s" % (f.name, '. '.join(f.errors))
+                       for f in form if f.errors])
