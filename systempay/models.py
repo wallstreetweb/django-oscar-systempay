@@ -121,4 +121,4 @@ class SystemPayTransaction(models.Model):
 
     @property
     def reference(self):
-        return "%s%s" % (self.trans_date, self.trans_id)
+        return "%s-%s" % (self.trans_date, self.trans_id)
