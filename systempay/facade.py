@@ -116,7 +116,7 @@ class Facade(object):
         # create the database record
         order_number = self.get_order_number(form)
         total_incl_tax = self.get_total_incl_tax(form)
-        txn = self.record_return_txn(order_number, total_incl_tax, request)
+        txn = self.save_return_txn(order_number, total_incl_tax, request)
 
         if not form.is_valid():
             txn.error_message = printable_form_errors(form)
@@ -134,7 +134,7 @@ class Facade(object):
             )
             txn.save()
             raise SystemPayFormNotValid(
-                "The data received are not valid. See the transaction "
+                "Incorrect signature. Check "
                 "record #%s for more details" % txn.id)
 
         if not txn.is_complete():
@@ -156,25 +156,23 @@ class Facade(object):
 
         return txn
 
-    def record_submit_txn(self, order_number, amount, form):
-        return self.record_txn(order_number,
-                               amount,
-                               form.data,
-                               SystemPayTransaction.MODE_SUBMIT)
+    def save_submit_txn(self, order_number, amount, form):
+        """
+        Save submitted transaction into the database.
+        """
+        return self.save_txn(order_number, amount, form.data,
+                             SystemPayTransaction.MODE_SUBMIT)
 
-    def record_return_txn(self, order_number, amount, request):
+    def save_return_txn(self, order_number, amount, request):
         """
-        Record the transaction in the database to be able to track
-        everything we received.
+        Save notification transaction into the database.
         """
-        return self.record_txn(order_number,
-                               amount,
-                               request.POST.copy(),
-                               SystemPayTransaction.MODE_RETURN)
+        return self.save_txn(order_number, amount, request.POST.copy(),
+                             SystemPayTransaction.MODE_RETURN)
 
-    def record_txn(self, order_number, amount, data, mode):
+    def save_txn(self, order_number, amount, data, mode):
         """
-        Record the transaction in the database to be able to track
+        Save the transaction into the database to be able to track
         everything we received.
         """
         # convert the QueryDict into a dict

@@ -36,8 +36,9 @@ EventHandler = get_class('order.processing', 'EventHandler')
 
 class SecureRedirectView(CheckoutSessionMixin, generic.DetailView):
     """
-    Initiate the transaction with SystemPay and redirect the user
-    to SystemPay Checkout to perform the transaction.
+    Simple Redirect Page initiating the transaction throughout
+    a fulfilled form of the payment order send to the SystemPay
+    checkout.
     """
     template_name = 'systempay/secure_redirect.html'
     context_object_name = 'order'
@@ -78,7 +79,7 @@ class SecureRedirectView(CheckoutSessionMixin, generic.DetailView):
     def get(self, *args, **kwargs):
         order = self.get_object()
         form = self.get_form()
-        Facade().record_submit_txn(order.number, order.total_incl_tax, form)
+        Facade().save_submit_txn(order.number, order.total_incl_tax, form)
         response = super(SecureRedirectView, self).get(*args, **kwargs)
 
         # Flush of all session data
@@ -245,11 +246,12 @@ class HandleIPN(OrderPlacementMixin, generic.View):
             # Authorize admins for test purpose to copy the GET params
             #  to the POST dict
             request.POST = request.GET
+            # from .test_vars import NOTIFICATION
+            # request.POST = NOTIFICATION
             return self.post(request, *args, **kwargs)
         return HttpResponse()
 
     def post(self, request, *args, **kwargs):
-        print(request.POST)
         try:
             self.handle_ipn(request)
         except PaymentError as inst:
@@ -260,13 +262,16 @@ class HandleIPN(OrderPlacementMixin, generic.View):
         """
         Complete payment.
         """
-        txn = None
+        # for k, v in request.POST.items():
+        #     if k.startswith('vads'):
+        #         print('{0:10} ==> {1:10}'.format(k, v))
+
         try:
             txn = Facade().handle_request(request)
             order = Order.objects.get(number=txn.order_number)
 
             source_type, is_created = SourceType.objects.get_or_create(
-                code='systempay'
+                code='systempay', name='SystemPay',
             )
 
             if txn.operation_type == SystemPayTransaction.OPERATION_TYPE_DEBIT:

@@ -20,12 +20,18 @@ CURRENCIES = (
 
 
 class SystemPayTransaction(models.Model):
+    """
+    Model for any transaction between the SystemPay Checkout
+    server and the merchant site.
 
-    # Mode (send or return) request
-    MODE_SUBMIT, MODE_RETURN = ('Submit', 'Return')
+    The transaction mode attribute differentiates sent transaction
+    from returning ones (notification).
+    """
+
+    MODE_SUBMIT, MODE_RETURN = ('SUBMIT', 'RETURN')
     MODE_CHOICES = (
-        (MODE_SUBMIT, u"Submit Request"),
-        (MODE_RETURN, u"Return Request"),
+        (MODE_SUBMIT, "SUBMIT"),
+        (MODE_RETURN, "REQUEST"),
     )
     mode = models.CharField(max_length=10, choices=MODE_CHOICES)
 
@@ -63,22 +69,27 @@ class SystemPayTransaction(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = (('trans_id', 'trans_date'), )
         ordering = ('-date_created', )
 
-    def save(self, *args, **kwargs):
-
-        return super(SystemPayTransaction, self).save(*args, **kwargs)
+    def __str__(self):
+        return 'SystemPayTransaction mode: %(mode)s order_id: %(order_id)s ' \
+               'trans_id: %(trans_id)s' % {'mode': self.mode.upper(),
+                                           'order_id': self.order_number,
+                                           'trans_id': self.trans_id, }
 
     def request(self):
         return self._as_table(self.context)
     request.allow_tags = True
 
-    def _as_table(self, params):
+    @staticmethod
+    def _as_table(params):
         rows = []
         for k, v in sorted(params.items()):
-            rows.append('<tr><th>%s</th><td>%s</td></tr>' % (k, v[0]))
+            rows.append('<tr><th>%s</th><td>%s</td></tr>' % (k, v))
         return '<table>%s</table>' % ''.join(rows)
+
+    def as_table(self):
+        return self._as_table(self.__dict__)
 
     @property
     def context(self):
@@ -94,16 +105,14 @@ class SystemPayTransaction(models.Model):
     @property
     def computed_signature(self):
         """
-        Compute the signature on the fly
+        Compute the signature on the fly.
         """
-        from mock import Mock
-        from systempay.facade import Facade
-        from django.http import QueryDict
-        request = Mock()
-        request.POST = QueryDict(self.raw_request)
-        facade = Facade()
-        form = facade.get_return_form_populated_with_request(request)
+        dico = {}
+        for k, v in self.context.items():
+            dico.update({k: v[0]})
+        form = facade.gateway.get_return_form(**dico)
         return facade.gateway.compute_signature(form)
+
 
     @property
     def currency(self):
@@ -112,11 +121,3 @@ class SystemPayTransaction(models.Model):
     @property
     def reference(self):
         return "%s%s" % (self.trans_date, self.trans_id)
-
-    def __str__(self):
-        if self.mode == self.MODE_SUBMIT:
-            return "SUBMIT request trans_id: %s" % (self.trans_id,)
-        elif self.mode == self.MODE_RETURN:
-            return "RETURN request trans_id: %s" % (self.trans_id,)
-        return u"UNKNOWN request mode"
-

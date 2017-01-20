@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
 
-from .forms import SystemPaySubmitForm, SystemPayReturnForm
+from .forms import SystemPaySubmitForm, SystemPayNotificationForm
 from .utils import format_amount
 
 logger = logging.getLogger('systempay')
@@ -91,11 +91,12 @@ class Gateway(object):
         in the same time, same second and the same microsecond.
         """
         n = datetime.datetime.utcnow()
-        return "%06d" % (n.hour*36000 + n.minute*600 + n.second*10 + n.microsecond/10000)
+        return "%06d" % (n.hour*36000 + n.minute*600 + n.second*10 +
+                         n.microsecond/10000)
 
     def get_submit_form(self, amount, **kwargs):
         """
-        Pre-populate the submit form with the data
+        Pre-populate the submit form with the data.
 
         :amount: decimal or float amount value of the order
         :kwargs: additional data, check the fields of the `SystemPaySubmitForm`
@@ -105,7 +106,7 @@ class Gateway(object):
         data.update(kwargs)
 
         # required values
-        data['vads_action_mode'] = self._action_mode 
+        data['vads_action_mode'] = self._action_mode
         data['vads_amount'] = format_amount(amount)
         data['vads_currency'] = kwargs.get('vads_currency', '978')  # 978 stands
         # for EURO (ISO 639-1)
@@ -120,7 +121,7 @@ class Gateway(object):
 
         # requirement depends on the configuration
         if self._notify_user_by_email:
-            data['vads_cust_email'] = kwargs.get('user_email', '') 
+            data['vads_cust_email'] = kwargs.get('user_email', '')
 
         if self._custom_contracts:
             data['vads_contracts'] = self._custom_contracts
@@ -156,4 +157,4 @@ class Gateway(object):
         """
         data = {}
         data.update(kwargs)
-        return SystemPayReturnForm(data)
+        return SystemPayNotificationForm(data)

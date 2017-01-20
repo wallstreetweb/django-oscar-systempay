@@ -2,18 +2,16 @@ from django import forms
 from django.utils.encoding import force_text
 
 
-class ResponseForm(forms.Form):
+class AbstractSystemPayForm(forms.Form):
+    """
+    Common part (abstract) on which are built SystemPaySubmitForm and
+    SystemPayResponseForm.
+    """
 
     #################
     # Required params
     #
 
-    ACTION_MODE_INTERACTIVE, ACTION_MODE_SILENT = ('INTERACTIVE', 'SILENT')
-    ACTION_MODE_CHOICES = (
-        (ACTION_MODE_INTERACTIVE, 'INTERACTIVE'),
-        (ACTION_MODE_SILENT, 'SILENT'),
-    )
-    vads_action_mode = forms.ChoiceField(choices=ACTION_MODE_CHOICES)
     vads_amount = forms.CharField(max_length=12)  # NB: expressed in cents for
     #  euros (unity indivisible)
     vads_currency = forms.CharField(max_length=3)  # 978 stands for
@@ -21,21 +19,10 @@ class ResponseForm(forms.Form):
 
     CONTEXT_TEST, CONTEXT_PRODUCTION = ('TEST', 'PRODUCTION')
     CONTEXT_CHOICES = (
-        (CONTEXT_TEST, u"TEST"),
-        (CONTEXT_PRODUCTION, u"PRODUCTION")
+        (CONTEXT_TEST, 'TEST'),
+        (CONTEXT_PRODUCTION, 'PRODUCTION')
     )
     vads_ctx_mode = forms.ChoiceField(choices=CONTEXT_CHOICES)
-
-    # needs to be formatted as SINGLE or MULTI:first=val1;count=val2;period=val3
-    # example: MULTI:first=5000;count=3;period=30 
-    #          would represent a payment segmented with a first account of 50,00
-    #          then the rest of the amount would be divided in (count-1) other
-    #          payments with a time lapse of 30 days between them
-    #
-    # NB: if the validity date of the credit card can't handle the last payment
-    # (in case of multi)
-    #     the whole transaction will be rejected
-    vads_payment_config = forms.CharField(max_length=127)
 
     vads_site_id = forms.CharField(min_length=8, max_length=8)
 
@@ -88,11 +75,33 @@ class ResponseForm(forms.Form):
                       for param in self.sorted_signature_params(data)])
 
 
-class SystemPaySubmitForm(ResponseForm):
+class SystemPaySubmitForm(AbstractSystemPayForm):
+    """
+    Form send during a transaction throughout the secure redirect page.
+    """
 
     vads_page_action = forms.CharField(max_length=8)
     vads_contrib = forms.CharField(max_length=255, required=False)
     vads_payment_cards = forms.CharField(max_length=127, required=False)
+
+    ACTION_MODE_INTERACTIVE, ACTION_MODE_SILENT = ('INTERACTIVE', 'SILENT')
+    ACTION_MODE_CHOICES = (
+        (ACTION_MODE_INTERACTIVE, 'INTERACTIVE'),
+        (ACTION_MODE_SILENT, 'SILENT'),
+    )
+    vads_action_mode = forms.ChoiceField(choices=ACTION_MODE_CHOICES)
+
+
+    # needs to be formatted as SINGLE or MULTI:first=val1;count=val2;period=val3
+    # example: MULTI:first=5000;count=3;period=30
+    #          would represent a payment segmented with a first account of 50,00
+    #          then the rest of the amount would be divided in (count-1) other
+    #          payments with a time lapse of 30 days between them
+    #
+    # NB: if the validity date of the credit card can't handle the last payment
+    # (in case of multi)
+    #     the whole transaction will be rejected
+    vads_payment_config = forms.CharField(max_length=127)
 
     RETURN_MODE_NONE, RETURN_MODE_GET, RETURN_MODE_POST = ('NONE', 'GET', 'POST')
     RETURN_MODE_CHOICES = (
@@ -136,7 +145,10 @@ class SystemPaySubmitForm(ResponseForm):
         return self.fields.keys()
 
 
-class SystemPayReturnForm(ResponseForm):
+class SystemPayNotificationForm(AbstractSystemPayForm):
+    """
+    Form to handle notification from the checkout server.
+    """
 
     vads_effective_amount = forms.CharField(max_length=14, required=False)
     vads_auth_result = forms.CharField(min_length=2, max_length=2,
@@ -226,8 +238,3 @@ class SystemPayReturnForm(ResponseForm):
 
     def signature_params(self, data):
         return data.keys()
-
-
-class SystemPayIPNForm(SystemPayReturnForm):
-    #SIGNATURE_PARAMS = SystemPayReturnForm.SIGNATURE_PARAMS + ('hash',)
-    pass
