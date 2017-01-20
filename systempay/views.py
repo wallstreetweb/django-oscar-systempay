@@ -6,7 +6,8 @@ from django.conf import settings
 from django.apps import apps
 from django.views import generic
 from django.contrib import messages
-from django.http import HttpResponse, Http404, HttpResponseRedirect, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseRedirect, \
+    HttpResponseBadRequest
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 
@@ -95,10 +96,8 @@ class SecureRedirectView(CheckoutSessionMixin, generic.DetailView):
 
 
 class PlaceOrderView(PaymentDetailsView):
-    # template_name = 'systempay/preview.html'
     template_name = 'checkout/payment_details.html'
     template_name_preview = 'systempay/preview.html'
-    # template_name_preview = 'checkout/preview.html'
     preview = True
 
     def post(self, request, *args, **kwargs):
@@ -116,19 +115,7 @@ class PlaceOrderView(PaymentDetailsView):
         received from server to server.
         Only record the allocated amount.
         """
-        # Record payment source
-        payment_method = self.checkout_session.payment_method()
-        if payment_method is None:
-            messages.error(self.request, _("Please choose a payment method."))
-            return HttpResponseRedirect(reverse('checkout:payment-method'))
-
-        source_type, is_created = SourceType.objects.get_or_create(
-            code=payment_method)
-        source = Source(source_type=source_type,
-                        currency=kwargs.get('currency'),
-                        amount_allocated=total_incl_tax,
-                        amount_debited=D(0))
-        self.add_payment_source(source)
+        pass
 
     def handle_successful_order(self, order, send_confirmation_message=True):
         """
@@ -157,16 +144,15 @@ class PlaceOrderView(PaymentDetailsView):
 class ResponseView(generic.RedirectView):
     def get_order(self):
         # We allow superusers to force an order thank-you page for testing
-        # http://localhost:8001/systempay/handle-ipn?vads_amount=330425&vads_auth_mode=FULL&vads_auth_number=3fea71&vads_auth_result=00&vads_capture_delay=0&vads_card_brand=CB&vads_card_number=497010XXXXXX0000&vads_payment_certificate=febb57ed6bb93cc6b3f14a1ccbfb3cee143c4c75&vads_ctx_mode=TEST&vads_currency=978&vads_effective_amount=330425&vads_site_id=21908992&vads_trans_date=20170117115209&vads_trans_id=427300&vads_trans_uuid=c4b5b52c439d44428aba6c489cd87a6c&vads_validation_mode=0&vads_version=V2&vads_warranty_result=YES&vads_payment_src=EC&vads_order_id=100024&vads_order_info=&vads_order_info2=&vads_order_info3=&vads_cust_email=bastien.roques1%40gmail.com&vads_cust_id=1&vads_cust_name=Bastien+Roques&vads_cust_country=&vads_contrib=&vads_user_info=&vads_cust_state=&vads_ship_to_name=jean-s%C3%A9bastien+r%C3%B4ques&vads_ship_to_street=34+rue+roucher&vads_ship_to_street2=34+rue+roucher&vads_ship_to_city=Montpellier&vads_ship_to_zip=34000&vads_ship_to_country=FR&vads_sequence_number=1&vads_contract_used=5591192&vads_trans_status=AUTHORISED&vads_expiry_month=6&vads_expiry_year=2018&vads_bank_product=F&vads_pays_ip=FR&vads_presentation_date=20170117115216&vads_effective_creation_date=20170117115216&vads_operation_type=DEBIT&vads_threeds_enrolled=Y&vads_threeds_cavv=Q2F2dkNhdnZDYXZ2Q2F2dkNhdnY%3D&vads_threeds_eci=05&vads_threeds_xid=UEZPM01tcFVxOUVpSnh0NzB4MTc%3D&vads_threeds_cavvAlgorithm=2&vads_threeds_status=Y&vads_threeds_sign_valid=1&vads_threeds_error_code=&vads_threeds_exit_status=10&vads_risk_control=&vads_result=00&vads_extra_result=&vads_card_country=FR&vads_language=&vads_action_mode=INTERACTIVE&vads_cust_address=&vads_cust_cell_phone=&vads_cust_city=&vads_payment_config=SINGLE&vads_page_action=PAYMENT&vads_cust_phone=&vads_cust_title=&vads_cust_zip=&signature=2a7786d4e622bec989278852910268bd0aabf11f
 
         order = None
         if self.request.user.is_superuser:
             if 'order_number' in self.request.GET:
-                order = Order._default_manager.get(
+                order = Order.objects.get(
                     number=self.request.GET['order_number'])
             elif 'order_id' in self.request.GET:
-                order = Order._default_manager.get(
-                    id=self.request.GET['orderid'])
+                order = Order.objects.get(
+                    id=self.request.GET['order_id'])
 
         if not order:
             order_number = None
@@ -179,7 +165,7 @@ class ResponseView(generic.RedirectView):
                 raise Http404(_("No order found"))
 
             try:
-                order = Order._default_manager.get(number=order_number)
+                order = Order.objects.get(number=order_number)
             except Order.DoesNotExist:
                 raise Http404(_("The page requested seems outdated"))
 
