@@ -151,7 +151,8 @@ class Gateway(object):
 
         return SystemPaySubmitForm(data)
 
-    def get_return_form(self, **kwargs):
+    @staticmethod
+    def get_return_form(**kwargs):
         """
         Pre-populate the return form with the current request
         """

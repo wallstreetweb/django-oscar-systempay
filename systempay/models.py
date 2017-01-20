@@ -107,12 +107,13 @@ class SystemPayTransaction(models.Model):
         """
         Compute the signature on the fly.
         """
-        dico = {}
+        params = {}
+        from .facade import Facade
+        f = Facade()
         for k, v in self.context.items():
-            dico.update({k: v[0]})
-        form = facade.gateway.get_return_form(**dico)
-        return facade.gateway.compute_signature(form)
-
+            params.update({k: v[0]})
+        form = f.gateway.get_return_form(**params)
+        return f.gateway.compute_signature(form)
 
     @property
     def currency(self):
