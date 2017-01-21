@@ -113,7 +113,7 @@ class Facade(object):
         """
         form = self.get_return_form_populated_with_request(request)
 
-        # create the database record
+        # create the transaction record, before saving the source payment
         order_number = self.get_order_number(form)
         total_incl_tax = self.get_total_incl_tax(form)
         txn = self.save_return_txn(order_number, total_incl_tax, request)
@@ -122,16 +122,12 @@ class Facade(object):
             txn.error_message = printable_form_errors(form)
             txn.save()
             msg = "The data received are not complete: %s. See the transaction " \
-                  "record #%s for more details"
-            raise SystemPayFormNotValid(
-                msg % (printable_form_errors(form), txn.id))
+                  "record #%s for more details" % (printable_form_errors(form), txn.id)
+            raise SystemPayFormNotValid(msg)
 
         if not self.gateway.is_signature_valid(form):
-            msg = "Signature not valid. Get '%s' vs Expected '%s'"
-            txn.error_message = msg % (
-                form.cleaned_data['signature'],
-                self.gateway.compute_signature(form)
-            )
+            txn.error_message = "Signature not valid. Get '%s' vs Expected '%s'" % (
+                form.cleaned_data['signature'], self.gateway.compute_signature(form))
             txn.save()
             raise SystemPayFormNotValid(
                 "Incorrect signature. Check "
@@ -152,7 +148,7 @@ class Facade(object):
                 raise SystemPayGatewayServerError(
                     "Technical error while processing the payment")
             else:
-                raise SystemPayGatewayServerError("Unknown error")
+                raise SystemPayGatewayServerError("Unknown error: %s" % txn.result)
 
         return txn
 
