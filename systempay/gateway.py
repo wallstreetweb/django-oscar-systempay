@@ -43,8 +43,8 @@ class Gateway(object):
         self._context_mode = context_mode
 
         if not re.match(r'^\d{8}$', str(site_id)):
-            raise RuntimeError("Config `site_id` must contain exactly 8 digits,"
-                               " and is not : '%s'" % site_id)
+            raise RuntimeError("`site_id` must contain exactly 8 digits, "
+                               "and is not : '%s'" % site_id)
         self._site_id = site_id
 
         if action_mode not in ('INTERACTIVE', 'SILENT'):
@@ -108,11 +108,13 @@ class Gateway(object):
         # required values
         data['vads_action_mode'] = self._action_mode
         data['vads_amount'] = format_amount(amount)
-        data['vads_currency'] = kwargs.get('vads_currency', '978')  # 978 stands
-        # for EURO (ISO 639-1)
+
+        # Default to 978 for EURO (ISO 639-1)
+        data['vads_currency'] = kwargs.get('vads_currency', '978')
         data['vads_ctx_mode'] = self._context_mode
         data['vads_page_action'] = 'PAYMENT'
-        data['vads_payment_config'] = kwargs.get('vads_payment_config', 'SINGLE')
+        data['vads_payment_config'] = kwargs.get('vads_payment_config',
+                                                 'SINGLE')
         data['vads_site_id'] = self._site_id
         data['vads_trans_date'] = self.get_trans_date()
         data['vads_trans_id'] = self.get_trans_id()

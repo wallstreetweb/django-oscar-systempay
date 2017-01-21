@@ -91,19 +91,19 @@ class SystemPaySubmitForm(AbstractSystemPayForm):
     )
     vads_action_mode = forms.ChoiceField(choices=ACTION_MODE_CHOICES)
 
-
-    # needs to be formatted as SINGLE or MULTI:first=val1;count=val2;period=val3
-    # example: MULTI:first=5000;count=3;period=30
-    #          would represent a payment segmented with a first account of 50,00
-    #          then the rest of the amount would be divided in (count-1) other
-    #          payments with a time lapse of 30 days between them
+    # need to be formatted as SINGLE or MULTI:first=val1;count=val2;period=val3
+    # eg. MULTI:first=5000;count=3;period=30
+    #     would represent a payment segmented with a first account of 50,00
+    #     then the rest of the amount would be divided in (count-1) other
+    #     payments with a time lapse of 30 days between them
     #
     # NB: if the validity date of the credit card can't handle the last payment
     # (in case of multi)
     #     the whole transaction will be rejected
     vads_payment_config = forms.CharField(max_length=127)
 
-    RETURN_MODE_NONE, RETURN_MODE_GET, RETURN_MODE_POST = ('NONE', 'GET', 'POST')
+    RETURN_MODE_NONE, RETURN_MODE_GET, RETURN_MODE_POST = \
+        ('NONE', 'GET', 'POST')
     RETURN_MODE_CHOICES = (
         (RETURN_MODE_NONE, 'NONE'),
         (RETURN_MODE_GET, 'GET'),

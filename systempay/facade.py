@@ -4,11 +4,15 @@ import logging
 
 from django.conf import settings
 from django.http import QueryDict
+from django.utils.translation import ugettext_lazy as _
 
 from . import gateway
 from .models import SystemPayTransaction
 from .utils import printable_form_errors
-from .exceptions import *
+from .exceptions import (
+    SystemPayGatewayServerError, SystemPayGatewayParamError,
+    SystemPayGatewayPaymentRejected, SystemPayFormNotValid)
+
 
 logger = logging.getLogger('systempay')
 
@@ -116,22 +120,28 @@ class Facade(object):
         # create the transaction record, before saving the source payment
         order_number = self.get_order_number(form)
         total_incl_tax = self.get_total_incl_tax(form)
-        txn = self.save_return_txn(order_number, total_incl_tax, request)
+        txn = self.save_txn_notification(order_number, total_incl_tax, request)
 
         if not form.is_valid():
             txn.error_message = printable_form_errors(form)
             txn.save()
-            msg = "The data received are not complete: %s. See the transaction " \
-                  "record #%s for more details" % (printable_form_errors(form), txn.id)
+            msg = _("The data received are not complete: %s. See the "
+                    "transaction record #%s for more details") % (
+                printable_form_errors(form),
+                txn.id,
+            )
             raise SystemPayFormNotValid(msg)
 
         if not self.gateway.is_signature_valid(form):
-            txn.error_message = "Signature not valid. Get '%s' vs Expected '%s'" % (
-                form.cleaned_data['signature'], self.gateway.compute_signature(form))
+            txn.error_message = \
+                _("Signature not valid. Get '%s' instead of '%s'") % (
+                    form.cleaned_data['signature'],
+                    self.gateway.compute_signature(form)
+                )
             txn.save()
             raise SystemPayFormNotValid(
-                "Incorrect signature. Check "
-                "record #%s for more details" % txn.id)
+                _("Incorrect signature. Check SystemPayTransaction #%s "
+                  "for more details") % txn.id)
 
         if not txn.is_complete():
 
@@ -148,7 +158,8 @@ class Facade(object):
                 raise SystemPayGatewayServerError(
                     "Technical error while processing the payment")
             else:
-                raise SystemPayGatewayServerError("Unknown error: %s" % txn.result)
+                raise SystemPayGatewayServerError(
+                    "Unknown error: %s" % txn.result)
 
         return txn
 
@@ -159,7 +170,7 @@ class Facade(object):
         return self.save_txn(order_number, amount, form.data,
                              SystemPayTransaction.MODE_SUBMIT)
 
-    def save_return_txn(self, order_number, amount, request):
+    def save_txn_notification(self, order_number, amount, request):
         """
         Save notification transaction into the database.
         """

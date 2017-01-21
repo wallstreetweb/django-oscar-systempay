@@ -41,8 +41,6 @@ class SystemPayGatewayParamError(SystemPayError):
 
         '13': 'vads_order_id',
         '14': 'vads_order_info',
-        '14': 'vads_order_info2',
-        '14': 'vads_order_info3',
 
         '08': 'vads_payment_cards',
         '48': 'vads_return_mode',
@@ -64,8 +62,6 @@ class SystemPayGatewayParamError(SystemPayError):
         '36': 'redirect_error_timeout',
         '37': 'redirect_error_message',
 
-        '48': 'return_mode',
-
         '83': 'vads_ship_to_city',
         '86': 'vads_ship_to_country',
         '80': 'vads_ship_to_name',
@@ -77,19 +73,22 @@ class SystemPayGatewayParamError(SystemPayError):
     }
 
     def __init__(self, code):
-        super(SystemPayGatewayParamError, self).__init__(self, 
-                code=code, 
-                message=u"The gateway throw the error code '%s' associated to the param '%s'" % (
-                    code, self.ASSOCS.get(code, '<unknown>')
-                )
-            )
+        super(SystemPayGatewayParamError, self).__init__(
+            self,
+            code=code,
+            message="The gateway throw the error code '%s' associated to the "
+                    "param '%s'" % (code, self.ASSOCS.get(code, '<unknown>')
+                                    )
+        )
 
 
 class SystemPayGatewayAuthorizationError(SystemPayError):
-    pass    
+    pass
+
 
 class SystemPayGatewayPaymentRejected(SystemPayError):
     pass
+
 
 class SystemPayGatewayServerError(SystemPayError):
     pass

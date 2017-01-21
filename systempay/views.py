@@ -6,8 +6,8 @@ from django.conf import settings
 from django.apps import apps
 from django.views import generic
 from django.contrib import messages
-from django.http import HttpResponse, Http404, HttpResponseRedirect, \
-    HttpResponseBadRequest
+from django.http import (HttpResponse, Http404, HttpResponseRedirect,
+                         HttpResponseBadRequest)
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
 
@@ -16,7 +16,7 @@ from oscar.core.loading import get_class, get_classes
 from .models import SystemPayTransaction
 from .facade import Facade
 from .gateway import Gateway
-from .exceptions import *
+from .exceptions import SystemPayError
 
 logger = logging.getLogger('systempay')
 
@@ -185,8 +185,8 @@ class ReturnResponseView(ResponseView):
         if not txns:
             messages.error(
                 self.request,
-                _("No response received from your bank for the moment. "
-                  "Be patient, we'll get back to you as soon as we receive it.")
+                _("No response received from your bank. Be patient, we'll get"
+                  " back to you as soon as we receive it.")
             )
         else:
             txn = txns[0]
@@ -198,8 +198,8 @@ class ReturnResponseView(ResponseView):
             else:
                 messages.error(
                     self.request,
-                    _("Your payment has been rejected for the reason. You will "
-                      "not be charged. Contact the support for more details.")
+                    _("Your payment has been rejected. You will not be "
+                      "charged. Contact support for more details.")
                 )
 
         self.request.session['checkout_order_id'] = order.id
@@ -247,18 +247,17 @@ class HandleIPN(OrderPlacementMixin, generic.View):
     def handle_ipn(self, request, **kwargs):
         """
         Complete payment.
+
         """
-        # for k, v in request.POST.items():
-        #     if k.startswith('vads'):
-        #         print('{0:10} ==> {1:10}'.format(k, v))
+
+        # TODO: SystemPay transaction should be linked to a Source as FK
+        # TODO  Should also include 'PaymentEvent'
 
         try:
             txn = Facade().handle_request(request)
             order = Order.objects.get(number=txn.order_number)
 
-            source_type, is_created = SourceType.objects.get_or_create(
-                code='systempay', name='SystemPay',
-            )
+            source_type, _ = SourceType.objects.get_or_create(code='systempay')
 
             if txn.operation_type == SystemPayTransaction.OPERATION_TYPE_DEBIT:
                 source = Source(source_type=source_type,
@@ -287,5 +286,5 @@ class HandleIPN(OrderPlacementMixin, generic.View):
         except SystemPayError:
             raise
         except Order.DoesNotExist:
-            logger.error(_("Unable to retrieve Order #%(order_number)s")
-                         % {'order_number': txn.order_number})
+            msg = _("Unable to retrieve Order #%s") % txn.order_number
+            logger.error(msg)

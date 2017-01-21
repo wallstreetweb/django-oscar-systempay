@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.views.decorators.csrf import csrf_exempt
 
 from oscar.core.application import Application
@@ -7,7 +7,7 @@ from . import views
 
 
 class SystemPayApplication(Application):
-    name = 'systempay' 
+    name = 'systempay'
 
     secure_redirect_view = views.SecureRedirectView
     place_order_view = views.PlaceOrderView
