@@ -35,6 +35,17 @@ PaymentError, UnableToTakePayment = get_classes(
 EventHandler = get_class('order.processing', 'EventHandler')
 
 
+class RedirectView(CheckoutSessionMixin, generic.RedirectView):
+
+    permanent = False
+
+    def get_redirect_url(self, *args, **kwargs):
+        try:
+            pass
+        except:
+            pass
+
+
 class SecureRedirectView(CheckoutSessionMixin, generic.DetailView):
     """
     Simple Redirect Page initiating the transaction throughout
@@ -113,7 +124,6 @@ class PlaceOrderView(PaymentDetailsView):
         """
         Skip this step when placing the order, it'll be handle by the ipn
         received from server to server.
-        Only record the allocated amount.
         """
         pass
 
@@ -251,13 +261,12 @@ class HandleIPN(OrderPlacementMixin, generic.View):
         """
 
         # TODO: SystemPay transaction should be linked to a Source as FK
-        # TODO  Should also include 'PaymentEvent'
 
         try:
             txn = Facade().handle_request(request)
             order = Order.objects.get(number=txn.order_number)
 
-            source_type, _ = SourceType.objects.get_or_create(code='systempay')
+            source_type, _ = SourceType.objects.get_or_create(name='systempay')
 
             if txn.operation_type == SystemPayTransaction.OPERATION_TYPE_DEBIT:
                 source = Source(source_type=source_type,
@@ -266,6 +275,8 @@ class HandleIPN(OrderPlacementMixin, generic.View):
                                 amount_debited=txn.amount,
                                 reference=txn.reference)
                 self.add_payment_source(source)
+                self.add_payment_event('Settled', txn.amount,
+                                       reference=txn.reference)
 
             elif txn.operation_type == SystemPayTransaction.OPERATION_TYPE_CREDIT:
                 source = Source(source_type=source_type,
