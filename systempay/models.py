@@ -132,3 +132,17 @@ class SystemPayTransaction(models.Model):
     @property
     def reference(self):
         return self.trans_id
+
+    def debug(self, verbose=False):
+        res = self.raw_request.split('&')
+        if not verbose:
+            li = []
+            values = ('amount', 'auth_result', 'order_id', 'trans_status',
+                      'check_src', 'operation_type')
+            for item in res:
+                for v in values:
+                    if v in item:
+                        li.append(item)
+            res = li
+        return sorted(res)
+

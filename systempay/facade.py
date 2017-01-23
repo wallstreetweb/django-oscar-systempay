@@ -157,6 +157,8 @@ class Facade(object):
             elif txn.result == '96':
                 raise SystemPayGatewayServerError(
                     "Technical error while processing the payment")
+            elif txn.result == '17':
+                raise
             else:
                 raise SystemPayGatewayServerError(
                     "Unknown error: %s" % txn.result)
