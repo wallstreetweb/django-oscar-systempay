@@ -261,41 +261,43 @@ class HandleIPN(OrderPlacementMixin, generic.View):
         """
 
         # TODO: SystemPay transaction should be linked to a Source as FK
-
         try:
             txn = Facade().handle_request(request)
-            order = Order.objects.get(number=txn.order_number)
-
-            source_type, _ = SourceType.objects.get_or_create(name='systempay')
-
-            if txn.operation_type == SystemPayTransaction.OPERATION_TYPE_DEBIT:
-                source = Source(source_type=source_type,
-                                currency=txn.currency,
-                                amount_allocated=D(0),
-                                amount_debited=txn.amount,
-                                reference=txn.reference)
-                self.add_payment_source(source)
-                self.add_payment_event('Settled', txn.amount,
-                                       reference=txn.reference)
-
-            elif txn.operation_type == SystemPayTransaction.OPERATION_TYPE_CREDIT:
-                source = Source(source_type=source_type,
-                                currency=txn.currency,
-                                amount_allocated=D(0),
-                                amount_refunded=txn.amount,
-                                reference=txn.reference)
-                self.add_payment_source(source)
-
-            else:
-
-                raise PaymentError(
-                    _("Unknown operation type '%(operation_type)s'")
-                    % {'operation_type': txn.operation_type})
-
-            self.save_payment_details(order)
-
         except SystemPayError:
             raise
+
+        try:
+            order = Order.objects.get(number=txn.order_number)
         except Order.DoesNotExist:
-            msg = _("Unable to retrieve Order #%s") % txn.order_number
+            msg = "Unable to retrieve Order #%s" % txn.order_number
             logger.error(msg)
+
+        source_type, _ = SourceType.objects.get_or_create(name='systempay')
+
+        if txn.operation_type == SystemPayTransaction.OPERATION_TYPE_DEBIT:
+            source = Source(source_type=source_type,
+                            currency=txn.currency,
+                            amount_allocated=D(0),
+                            amount_debited=txn.amount,
+                            reference=txn.reference)
+            self.add_payment_source(source)
+            self.add_payment_event('Settled', txn.amount,
+                                   reference=txn.reference)
+
+        elif txn.operation_type == \
+                SystemPayTransaction.OPERATION_TYPE_CREDIT:
+            source = Source(source_type=source_type,
+                            currency=txn.currency,
+                            amount_allocated=D(0),
+                            amount_refunded=txn.amount,
+                            reference=txn.reference)
+            self.add_payment_source(source)
+            self.add_payment_event('Refunded', txn.amount,
+                                   reference=txn.reference)
+        else:
+            raise PaymentError(
+                _("Unknown operation type '%(operation_type)s'")
+                % {'operation_type': txn.operation_type})
+
+        self.save_payment_details(order)
+
