@@ -142,7 +142,7 @@ class SystemPayTransaction(models.Model):
             for item in res:
                 for v in values:
                     if v in item:
-                        li.append(item)
+                        li.append(item.split('vads_')[1])
             res = li
         return sorted(res)
 
