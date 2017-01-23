@@ -237,6 +237,9 @@ class CancelResponseView(ResponseView):
 
 
 class HandleIPN(OrderPlacementMixin, generic.View):
+    AUTHORISED = 'AUTHORISED'
+    CAPTURED = 'CAPTURED'
+
     def get(self, request, *args, **kwargs):
         if request.user and request.user.is_superuser:
             # Authorize admins for test purpose to copy the GET params
@@ -257,10 +260,12 @@ class HandleIPN(OrderPlacementMixin, generic.View):
     def handle_ipn(self, request, **kwargs):
         """
         Complete payment.
-
         """
 
         # TODO: SystemPay transaction should be linked to a Source as FK
+        # TODO: Facade shouldn't be used like this
+        # TODO: Check when order creation occurs
+
         try:
             txn = Facade().handle_request(request)
         except SystemPayError:
@@ -273,31 +278,35 @@ class HandleIPN(OrderPlacementMixin, generic.View):
             logger.error(msg)
 
         source_type, _ = SourceType.objects.get_or_create(name='systempay')
+        trans_status = txn.value('vads_trans_status')
+        payment_event = '%s-%s' % (txn.operation_type, trans_status)
+
+        refunded = allocated = debited = D(0)
 
         if txn.operation_type == SystemPayTransaction.OPERATION_TYPE_DEBIT:
-            source = Source(source_type=source_type,
-                            currency=txn.currency,
-                            amount_allocated=D(0),
-                            amount_debited=txn.amount,
-                            reference=txn.reference)
-            self.add_payment_source(source)
-            self.add_payment_event('Settled', txn.amount,
-                                   reference=txn.reference)
-
-        elif txn.operation_type == \
-                SystemPayTransaction.OPERATION_TYPE_CREDIT:
-            source = Source(source_type=source_type,
-                            currency=txn.currency,
-                            amount_allocated=D(0),
-                            amount_refunded=txn.amount,
-                            reference=txn.reference)
-            self.add_payment_source(source)
-            self.add_payment_event('Refunded', txn.amount,
-                                   reference=txn.reference)
+            if self.AUTHORISED in trans_status:
+                allocated = txn.amount
+            elif self.CAPTURED in trans_status:
+                debited = txn.amount
+        elif txn.operation_type == SystemPayTransaction.OPERATION_TYPE_CREDIT:
+            if self.AUTHORISED in trans_status:
+                allocated = txn.amount
+            elif self.CAPTURED in trans_status:
+                refunded = txn.amount
         else:
             raise PaymentError(
                 _("Unknown operation type '%(operation_type)s'")
                 % {'operation_type': txn.operation_type})
 
+        source = Source(source_type=source_type,
+                        currency=txn.currency,
+                        amount_allocated=allocated,
+                        amount_debited=debited,
+                        amount_refunded=refunded,
+                        reference=txn.reference)
+
+        self.add_payment_source(source)
+        self.add_payment_event(payment_event,
+                               txn.amount, reference=txn.reference)
         self.save_payment_details(order)
 
