@@ -1,73 +1,78 @@
-{% extends "base.html" %}
+{% extends "layout.html" %}
 {% load i18n static %}
 
 {% block extrahead %}
-<style>
-    .container .secure-redirect {
-        background: #fff;
-        text-align: center;
-    }
-    .container form {
-        margin-top: 0;
-        margin-bottom: 0;
-    }
-    .container .loader {
-        margin-top: 20px;
-    }
-    .container .advice {
-        color: #666;
-        font-family: Arial, sans-serif;
-        font-size: 12px;
-        margin-top: 40px;
-        margin-bottom: 0;
-    }
-    .container .advice [type=submit] {
-        background: transparent;
-        border: none;
-        color: #444;
-        font-size: 12px;
-        line-height: 1em;
-        margin: 0;
-        padding: 0;
-        outline: none;
-        text-decoration: underline;
-    }
-</style>
+    <style>
+        .container .secure-redirect {
+            background: #fff;
+            text-align: center;
+        }
+        .container form {
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+        .container .loader {
+            margin-top: 20px;
+        }
+        .container .advice {
+            color: #666;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin-top: 40px;
+            margin-bottom: 0;
+        }
+        .container .advice [type=submit] {
+            background: transparent;
+            border: none;
+            color: #444;
+            font-size: 12px;
+            line-height: 1em;
+            margin: 0;
+            padding: 0;
+            outline: none;
+            text-decoration: underline;
+        }
+    </style>
 {% endblock %}
 
-{% block layout %}
-{{ block.super }}
+{% block content_wrapper %}
+    {{ block.super }}
 
-<div class="navbar accounts">
-    <div class="navbar-inner">
-        <div class="container-fluid">
-            <a class="brand" href="{% url "promotions:home" %}">{{ shop_name }}</a>
+    <div class="navbar accounts">
+        <div class="navbar-inner">
+            <div class="container-fluid">
+            </div>
+        </div><!-- /navbar-inner -->
+    </div><!-- /navbar -->
+
+    <div class="container">
+        <div class="hero-unit secure-redirect">
+            <p>
+                <img src="{% static "systempay/img/systempay.jpg" %}" width=200 alt="systempay"/>
+            </p>
+            <h2>Redirection sécurisée</h2>
+            <p>Vous allez être redirigé vers la plateforme de paiement Banque Populaire.</p>
+            <p>
+                <img class="loader" src="{% static "systempay/img/loader.gif" %}" />
+            </p>
+
+
+            <form id="submit-form" method="post" action="{{ SYSTEMPAY_GATEWAY_URL }}">
+                {% for field in submit_form %}
+                    {{ field.as_hidden }}
+                {% endfor %}
+                <noscript><p class="advice">si la redirection vous semble trop longue <input type="submit" value="cliquez-ici" /></p></noscript>
+            </form>
+            <!-- <p>
+                <a href="#redirect">si la redirection vous semble trop longue cliquez-ici</a>
+            </p> -->
         </div>
-    </div><!-- /navbar-inner -->
-</div><!-- /navbar -->
-
-<div class="container">
-    <div class="hero-unit secure-redirect">
-        <h2>Redirection sécurisée</h2>
-        <p>Vous allez être redirigé vers la plateforme de paiement Banque Populaire.</p>
-        <img class="loader" src="{% static "systempay/img/loader.gif" %}" />
-
-        <form id="submit-form" method="post" action="{{ SYSTEMPAY_GATEWAY_URL }}">
-            {% for field in submit_form %}
-                {{ field.as_hidden }}
-            {% endfor %}
-            <noscript><p class="advice">si la redirection vous semble trop longue <input type="submit" value="cliquez-ici" /></p></noscript>
-        </form>
-        <!-- <p>
-            <a href="#redirect">si la redirection vous semble trop longue cliquez-ici</a>
-        </p> -->
     </div>
-</div>
 {% endblock %}
 
 {% block onbodyload %}
     {{ block.super }}
     setTimeout(function() {
-        $('#submit-form').submit();
+    $('#submit-form').submit();
     }, {{ SYSTEMPAY_REDIRECT_TIMEOUT|default:5000 }});
 {% endblock onbodyload %}
