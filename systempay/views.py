@@ -272,7 +272,7 @@ class HandleIPN(OrderPlacementMixin, generic.View):
         # TODO: Avoid duplicate transaction / source / payment event
 
         try:
-            txn = Facade().handle_request(request)
+            txn = Facade().set_txn(request)
         except SystemPayError:
             raise SystemPayError('Something went wrong with transaction.')
 

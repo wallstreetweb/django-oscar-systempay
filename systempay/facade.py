@@ -89,15 +89,14 @@ class Facade(object):
         self.gateway.sign(form)
         return form
 
-    def handle_request(self, request):
+    def set_txn(self, request):
         """
         Manage a notification returned from the SystemPay server.
         """
-        # TODO: should be renamed as set_txn() and placed outside
 
         form = SystemPayNotificationForm(request.POST)
 
-        # create the transaction record, before saving the source payment
+        # create the transaction
         order_number = request.POST.get('vads_order_id')
         amount = self.get_amount_from_systempay(form)
         txn = self.save_txn_notification(order_number, amount, request)
