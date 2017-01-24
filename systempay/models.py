@@ -45,16 +45,6 @@ class SystemPayTransaction(models.Model):
     operation_type = models.CharField(
         max_length=10, choices=OPERATION_TYPE_CHOICES, blank=True, null=True)
 
-    # Trans status
-    ABANDONED, AUTHORISED, CANCELED, CAPTURED, CAPTURED_FAILED, EXPIRED = \
-        ('ABANDONED', 'AUTHORISED', 'CANCELED', 'CAPTURED', 'CAPTURED_FAILED',
-     'EXPIRED')
-    INITIAL, NOT_CREATED, REFUSED, WAITING_AUTHORISATION, \
-    WAITING_AUTHORISATION_TO_VALIDATE = ('INITIAL', 'NOT_CREATED', 'REFUSED',
-                                         'WAITING_AUTHORISATION',
-                                         'WAITING_AUTHORISATION_TO_VALIDATE')
-
-
     # Unique identifier in the range 000000 to 899999. Integer between
     # 900000 and 999999 are reserved
     # NB: it should only be unique over the current day

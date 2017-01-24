@@ -237,16 +237,20 @@ class CancelResponseView(ResponseView):
 
 
 class HandleIPN(OrderPlacementMixin, generic.View):
-    AUTHORISED = 'AUTHORISED'
-    CAPTURED = 'CAPTURED'
+    """
+    View to receive the Instant Payment Notification from the SystemPay
+    checkout. Unfortunately, SystemPay doesn't provide a full services of
+    batch. eg. no notification are sent for CAPTURED payment. To follow
+    payment status, you must check web services instead.
+    """
+    # AUTHORISED = 'AUTHORISED'
+    # CAPTURED = 'CAPTURED'
 
     def get(self, request, *args, **kwargs):
         if request.user and request.user.is_superuser:
             # Authorize admins for test purpose to copy the GET params
             #  to the POST dict
             request.POST = request.GET
-            # from .test_vars import NOTIFICATION
-            # request.POST = NOTIFICATION
             return self.post(request, *args, **kwargs)
         return HttpResponse()
 
@@ -265,11 +269,12 @@ class HandleIPN(OrderPlacementMixin, generic.View):
         # TODO: SystemPay transaction should be linked to a Source as FK
         # TODO: Facade shouldn't be used like this
         # TODO: Check when order creation occurs
+        # TODO: Avoid duplicate transaction / source / payment event
 
         try:
             txn = Facade().handle_request(request)
         except SystemPayError:
-            raise
+            raise SystemPayError('Something went wrong with transaction.')
 
         try:
             order = Order.objects.get(number=txn.order_number)
@@ -283,16 +288,21 @@ class HandleIPN(OrderPlacementMixin, generic.View):
 
         refunded = allocated = debited = D(0)
 
+        # We force here the allocated amount to be captured since SystemPay
+        # doesn't send any notification on a capture event
+        # (authorised = captured)
         if txn.operation_type == SystemPayTransaction.OPERATION_TYPE_DEBIT:
-            if self.AUTHORISED in trans_status:
-                allocated = txn.amount
-            elif self.CAPTURED in trans_status:
-                debited = txn.amount
+            # if self.AUTHORISED in trans_status:
+                # allocated = txn.amount
+            # elif self.CAPTURED in trans_status:
+            #     debited = txn.amount
+            debited = txn.amount
         elif txn.operation_type == SystemPayTransaction.OPERATION_TYPE_CREDIT:
-            if self.AUTHORISED in trans_status:
-                allocated = txn.amount
-            elif self.CAPTURED in trans_status:
-                refunded = txn.amount
+            # if self.AUTHORISED in trans_status:
+            #     allocated = txn.amount
+            # elif self.CAPTURED in trans_status:
+            #     refunded = txn.amount
+            refunded = txn.amount
         else:
             raise PaymentError(
                 _("Unknown operation type '%(operation_type)s'")

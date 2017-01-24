@@ -1,4 +1,3 @@
-from decimal import Decimal as D
 from urllib.parse import urlencode
 import logging
 
@@ -6,9 +5,10 @@ from django.conf import settings
 from django.http import QueryDict
 from django.utils.translation import ugettext_lazy as _
 
-from . import gateway
+from .gateway import Gateway
 from .models import SystemPayTransaction
-from .utils import printable_form_errors
+from systempay.forms import SystemPayNotificationForm
+from .utils import printable_form_errors, get_amount_from_systempay
 from .exceptions import (
     SystemPayGatewayServerError, SystemPayGatewayParamError,
     SystemPayGatewayPaymentRejected, SystemPayFormNotValid)
@@ -23,7 +23,7 @@ class Facade(object):
     """
 
     def __init__(self):
-        self.gateway = gateway.Gateway(
+        self.gateway = Gateway(
             settings.SYSTEMPAY_SANDBOX_MODE,
             settings.SYSTEMPAY_SITE_ID,
             settings.SYSTEMPAY_CERTIFICATE,
@@ -32,11 +32,8 @@ class Facade(object):
         self.currency = getattr(settings, 'SYSTEMPAY_CURRENCY', 978)  # 978
         # stands for EURO (ISO 639-1)
 
-    def get_order_number(self, form):
-        return form.data.get('vads_order_id')
-
-    def get_total_incl_tax(self, form):
-        return D(int(form.data.get('vads_amount', '0'))/100.0)
+    def get_amount_from_systempay(self, form):
+        return get_amount_from_systempay(form.data.get('vads_amount', '0'))
 
     def get_result(self, form):
         return form.data.get('vads_result')
@@ -92,35 +89,18 @@ class Facade(object):
         self.gateway.sign(form)
         return form
 
-    def get_return_form_populated_with_request(self, request, **kwargs):
-        """
-        Pre-populate the return form with the current request
-        """
-        return self.gateway.get_return_form(
-            **dict((k, request.POST.get(k)) for k in request.POST))
-
     def handle_request(self, request):
         """
-        Handle the income request which can have two different forms:
-
-            1. user coming back on the store after clicking on a "go back to
-            store" button
-
-            OR
-
-            2. a notification of payment issued from SystemPay server to
-            our server
-
-        In both cases the data will be POST data, the only difference is
-        that in the case 2. the POST data will contain a ``hash`` parameter
-        that needs to be include in the signature computation.
+        Manage a notification returned from the SystemPay server.
         """
-        form = self.get_return_form_populated_with_request(request)
+        # TODO: should be renamed as set_txn() and placed outside
+
+        form = SystemPayNotificationForm(request.POST)
 
         # create the transaction record, before saving the source payment
-        order_number = self.get_order_number(form)
-        total_incl_tax = self.get_total_incl_tax(form)
-        txn = self.save_txn_notification(order_number, total_incl_tax, request)
+        order_number = request.POST.get('vads_order_id')
+        amount = self.get_amount_from_systempay(form)
+        txn = self.save_txn_notification(order_number, amount, request)
 
         if not form.is_valid():
             txn.error_message = printable_form_errors(form)
@@ -143,25 +123,25 @@ class Facade(object):
                 _("Incorrect signature. Check SystemPayTransaction #%s "
                   "for more details") % txn.id)
 
-        if not txn.is_complete():
-
-            if txn.result == '02':
-                raise SystemPayGatewayPaymentRejected(
-                    "The shop must contact the bank")
-            elif txn.result == '05':
-                raise SystemPayGatewayPaymentRejected(
-                    "The payment has been rejected")
-            elif txn.result == '30':
-                extra_result = self.get_extra_result(form)
-                raise SystemPayGatewayParamError(code=extra_result)
-            elif txn.result == '96':
-                raise SystemPayGatewayServerError(
-                    "Technical error while processing the payment")
-            elif txn.result == '17':
-                raise
-            else:
-                raise SystemPayGatewayServerError(
-                    "Unknown error: %s" % txn.result)
+        # if not txn.is_complete():
+        #
+        #     if txn.result == '02':
+        #         raise SystemPayGatewayPaymentRejected(
+        #             "The shop must contact the bank")
+        #     elif txn.result == '05':
+        #         raise SystemPayGatewayPaymentRejected(
+        #             "The payment has been rejected")
+        #     elif txn.result == '30':
+        #         extra_result = self.get_extra_result(form)
+        #         raise SystemPayGatewayParamError(code=extra_result)
+        #     elif txn.result == '96':
+        #         raise SystemPayGatewayServerError(
+        #             "Technical error while processing the payment")
+        #     elif txn.result == '17':
+        #         raise
+        #     else:
+        #         raise SystemPayGatewayServerError(
+        #             "Unknown error: %s" % txn.result)
 
         return txn
 

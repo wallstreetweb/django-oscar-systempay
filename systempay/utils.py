@@ -1,4 +1,7 @@
-def format_amount(amount):
+from decimal import Decimal as D
+
+
+def set_amount_for_systempay(amount):
     """
     Format the amount to respond to the platform needs, which is a indivisible
     version of the amount.
@@ -7,6 +10,10 @@ def format_amount(amount):
          then format_amount = 5024
     """
     return int(amount * 100)
+
+
+def get_amount_from_systempay(amount):
+    return D(int(amount)/100.0)
 
 
 def printable_form_errors(form):

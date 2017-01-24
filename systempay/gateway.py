@@ -8,8 +8,8 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
 
-from .forms import SystemPaySubmitForm, SystemPayNotificationForm
-from .utils import format_amount
+from .forms import SystemPaySubmitForm
+from .utils import set_amount_for_systempay
 
 logger = logging.getLogger('systempay')
 
@@ -107,7 +107,7 @@ class Gateway(object):
 
         # required values
         data['vads_action_mode'] = self._action_mode
-        data['vads_amount'] = format_amount(amount)
+        data['vads_amount'] = set_amount_for_systempay(amount)
 
         # Default to 978 for EURO (ISO 639-1)
         data['vads_currency'] = kwargs.get('vads_currency', '978')
@@ -153,11 +153,3 @@ class Gateway(object):
 
         return SystemPaySubmitForm(data)
 
-    @staticmethod
-    def get_return_form(**kwargs):
-        """
-        Pre-populate the return form with the current request
-        """
-        data = {}
-        data.update(kwargs)
-        return SystemPayNotificationForm(data)
