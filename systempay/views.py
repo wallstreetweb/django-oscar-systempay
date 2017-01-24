@@ -236,7 +236,7 @@ class CancelResponseView(ResponseView):
         return reverse('basket:summary')
 
 
-class HandleIPN(OrderPlacementMixin, generic.View):
+class IpnView(OrderPlacementMixin, generic.View):
     """
     View to receive the Instant Payment Notification from the SystemPay
     checkout. Unfortunately, SystemPay doesn't provide a full services of

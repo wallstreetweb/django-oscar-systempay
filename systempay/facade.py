@@ -91,7 +91,7 @@ class Facade(object):
 
     def set_txn(self, request):
         """
-        Manage a notification returned from the SystemPay server.
+        Set a transaction from a SystemPay notification.
         """
 
         form = SystemPayNotificationForm(request.POST)

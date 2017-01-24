@@ -13,7 +13,7 @@ class SystemPayApplication(Application):
     place_order_view = views.PlaceOrderView
     return_response_view = views.ReturnResponseView
     cancel_response_view = views.CancelResponseView
-    handle_ipn_view = views.HandleIPN
+    handle_ipn_view = views.IpnView
 
     def __init__(self, *args, **kwargs):
         super(SystemPayApplication, self).__init__(*args, **kwargs)
