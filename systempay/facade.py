@@ -123,6 +123,8 @@ class Facade(object):
         if not txn.is_complete():
             raise SystemPayResultError(txn.result)
 
+        logger.info("Transaction %s has been proceeded." % txn.id)
+
         return txn
 
     def save_submit_txn(self, order_number, amount, form):

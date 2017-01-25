@@ -15,7 +15,7 @@
             <a href="{% url 'systempay-list' %}">{% trans "SystemPay transactions" %}</a>
             <span class="divider">/</span>
         </li>
-        <li class="active">Transaction #{{ txn.correlation_id }}</li>
+        <li class="active">Transaction {{ txn.trans_id }}</li>
     </ul>
 {% endblock %}
 

@@ -184,14 +184,11 @@ class CancelResponseView(ResponseView):
         handler.handle_order_status_change(
             order, getattr(settings, 'OSCAR_STATUS_CANCELLED', None))
 
-        # delete the order
-        order.delete()
-
         # unfreeze the basket
         basket = Basket.objects.get(pk=order.basket_id)
         basket.thaw()
 
-        messages.error(self.request, _("The transaction has be canceled"))
+        messages.error(self.request, _("The transaction has been canceled"))
         return reverse('basket:summary')
 
 
@@ -220,8 +217,6 @@ class IpnView(OrderPlacementMixin, generic.View):
 
         #todo: send message to customer
 
-        logger.info("Transaction #%s has been proceeded", txn.id)
-
         return HttpResponse()
 
     def handle_ipn(self, request, **kwargs):
@@ -239,7 +234,7 @@ class IpnView(OrderPlacementMixin, generic.View):
         try:
             txn = Facade().set_txn(request)
         except SystemPayError:
-            raise SystemPayError('Something went wrong with transaction.')
+            return
 
         try:
             order = Order.objects.get(number=txn.order_number)
