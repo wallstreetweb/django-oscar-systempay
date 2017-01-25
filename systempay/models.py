@@ -28,10 +28,10 @@ class SystemPayTransaction(models.Model):
     from returning ones (notification).
     """
 
-    MODE_SUBMIT, MODE_RETURN = ('SUBMIT', 'RETURN')
+    MODE_SUBMIT, MODE_RESPONSE = ('SUBMIT', 'RESPONSE')
     MODE_CHOICES = (
         (MODE_SUBMIT, "SUBMIT"),
-        (MODE_RETURN, "REQUEST"),
+        (MODE_RESPONSE, "RESPONSE"),
     )
     mode = models.CharField(max_length=10, choices=MODE_CHOICES)
 
@@ -62,9 +62,7 @@ class SystemPayTransaction(models.Model):
 
     error_message = models.TextField(max_length=512, blank=True, null=True)
 
-    #
     # Debug information
-    #
     raw_request = models.TextField(max_length=512)
     date_created = models.DateTimeField(auto_now_add=True)
 

@@ -39,7 +39,7 @@ class Facade(object):
     def get_auth_result(self, form):
         return form.data.get('vads_auth_result')
 
-    def get_submit_form_populated_with_order(self, order, **kwargs):
+    def set_submit_form(self, order, **kwargs):
         """
         Pre-populate the submit form with order data
 
@@ -94,7 +94,7 @@ class Facade(object):
 
         form = SystemPayNotificationForm(request.POST)
 
-        # create the transaction
+        # create transaction
         order_number = request.POST.get('vads_order_id')
         amount = get_amount_from_systempay(request.POST.get('vads_amount', '0'))
         txn = self.save_txn_notification(order_number, amount, request)
@@ -120,7 +120,7 @@ class Facade(object):
                 _("Incorrect signature. Check SystemPayTransaction #%s "
                   "for more details") % txn.id)
 
-        if not txn.result == '00':
+        if not txn.is_complete():
             raise SystemPayResultError(txn.result)
 
         return txn
@@ -137,7 +137,7 @@ class Facade(object):
         Save notification transaction into the database.
         """
         return self.save_txn(order_number, amount, request.POST.copy(),
-                             SystemPayTransaction.MODE_RETURN)
+                             SystemPayTransaction.MODE_RESPONSE)
 
     def save_txn(self, order_number, amount, data, mode):
         """

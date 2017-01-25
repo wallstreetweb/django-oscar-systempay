@@ -29,7 +29,7 @@ class TestForm(TestCase):
         return order
 
     def create_submit_form_with_order(self, order):
-        form = self.facade.get_submit_form_populated_with_order(self.order)
+        form = self.facade.set_submit_form(self.order)
         form.data['vads_trans_id'] = '654321'
         form.data['vads_trans_date'] = '20090501193530'
         form.data['vads_payment_config'] = 'SINGLE'

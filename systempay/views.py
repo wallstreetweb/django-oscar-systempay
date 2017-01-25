@@ -34,16 +34,9 @@ PaymentError, UnableToTakePayment = get_classes(
 
 EventHandler = get_class('order.processing', 'EventHandler')
 
-
-class RedirectView(CheckoutSessionMixin, generic.RedirectView):
-
-    permanent = False
-
-    def get_redirect_url(self, *args, **kwargs):
-        try:
-            pass
-        except:
-            pass
+# AUTHORISED = 'AUTHORISED'
+# CAPTURED = 'CAPTURED'
+CANCELLED = 'CANCELLED'
 
 
 class SecureRedirectView(CheckoutSessionMixin, generic.DetailView):
@@ -55,53 +48,36 @@ class SecureRedirectView(CheckoutSessionMixin, generic.DetailView):
     template_name = 'systempay/secure_redirect.html'
     context_object_name = 'order'
 
-    _order = None
     _form = None
 
     def get_object(self):
-        if self._order is not None:
-            return self._order
+        if 'checkout_order_id' in self.request.session:
+            order = Order.objects.get(
+                pk=self.request.session['checkout_order_id'])
+        else:
+            raise Http404(_("No order found"))
 
-        order = None
-        if self.request.user.is_superuser:
-            if 'order_number' in self.request.GET:
-                order = Order.objects.get(
-                    number=self.request.GET['order_number'])
-            elif 'order_id' in self.request.GET:
-                order = Order.objects.get(
-                    id=self.request.GET['order_id'])
-
-        if not order:
-            if 'checkout_order_id' in self.request.session:
-                order = Order.objects.get(
-                    pk=self.request.session['checkout_order_id'])
-            else:
-                raise Http404(_("No order found"))
-
-        self._order = order
         return order
 
-    def get_form(self):
-        if self._form is not None:
-            return self._form
-        order = self.get_object()
-        self._form = Facade().get_submit_form_populated_with_order(order)
-        return self._form
-
     def get(self, *args, **kwargs):
+
         order = self.get_object()
-        form = self.get_form()
-        Facade().save_submit_txn(order.number, order.total_incl_tax, form)
+
+        facade = Facade()
+        self._form = facade.set_submit_form(order)
+        facade.save_submit_txn(order.number, order.total_incl_tax, self._form)
         response = super(SecureRedirectView, self).get(*args, **kwargs)
 
         # Flush of all session data
         self.checkout_session.flush()
 
+        logger.info("Order #%s redirected to systempay", order.id)
+
         return response
 
     def get_context_data(self, **kwargs):
         ctx = super(SecureRedirectView, self).get_context_data(**kwargs)
-        ctx['submit_form'] = self.get_form()
+        ctx['submit_form'] = self._form
         ctx['SYSTEMPAY_GATEWAY_URL'] = Gateway.URL
         return ctx
 
@@ -139,10 +115,6 @@ class PlaceOrderView(PaymentDetailsView):
         # if send_confirmation_message:
         #     self.send_confirmation_message(order)
 
-        # Delay the flush of all session data
-        # self.checkout_session.flush()
-
-        # Save order id in session so secure redirect page can load it
         self.request.session['checkout_order_id'] = order.id
 
         return HttpResponseRedirect(self.get_success_url())
@@ -153,31 +125,18 @@ class PlaceOrderView(PaymentDetailsView):
 
 class ResponseView(generic.RedirectView):
     def get_order(self):
-        # We allow superusers to force an order thank-you page for testing
+        if 'vads_order_id' in self.request.POST:
+            order_number = self.request.POST['vads_order_id']
+        elif 'vads_order_id' in self.request.GET:
+            order_number = self.request.GET['vads_order_id']
 
-        order = None
-        if self.request.user.is_superuser:
-            if 'order_number' in self.request.GET:
-                order = Order.objects.get(
-                    number=self.request.GET['order_number'])
-            elif 'order_id' in self.request.GET:
-                order = Order.objects.get(
-                    id=self.request.GET['order_id'])
+        if not order_number:
+            raise Http404(_("No order found"))
 
-        if not order:
-            order_number = None
-            if 'vads_order_id' in self.request.POST:
-                order_number = self.request.POST['vads_order_id']
-            elif 'vads_order_id' in self.request.GET:
-                order_number = self.request.GET['vads_order_id']
-
-            if not order_number:
-                raise Http404(_("No order found"))
-
-            try:
-                order = Order.objects.get(number=order_number)
-            except Order.DoesNotExist:
-                raise Http404(_("The page requested seems outdated"))
+        try:
+            order = Order.objects.get(number=order_number)
+        except Order.DoesNotExist:
+            raise Http404(_("The page requested seems outdated"))
 
         return order
 
@@ -186,9 +145,9 @@ class ReturnResponseView(ResponseView):
     def get_redirect_url(self, **kwargs):
         order = self.get_order()
 
-        # check if the transaction exists
+        # check if transaction exists
         txns = SystemPayTransaction.objects.filter(
-            mode=SystemPayTransaction.MODE_RETURN,
+            mode=SystemPayTransaction.MODE_RESPONSE,
             order_number=order.number
         ).order_by('-date_created')[:1]
 
@@ -238,13 +197,12 @@ class CancelResponseView(ResponseView):
 
 class IpnView(OrderPlacementMixin, generic.View):
     """
-    View to receive the Instant Payment Notification from the SystemPay
-    checkout. Unfortunately, SystemPay doesn't provide a full services of
-    batch. eg. no notification are sent for CAPTURED payment. To follow
-    payment status, you must check web services instead.
+    View to receive the Instant Payment Notification (IPN) from SystemPay
+    checkout. Unfortunately, SystemPay doesn't provide a full batch
+    services. eg. no notification are sent for CAPTURED payment.
+
+    To follow payment status, you must use web services.
     """
-    # AUTHORISED = 'AUTHORISED'
-    # CAPTURED = 'CAPTURED'
 
     def get(self, request, *args, **kwargs):
         if request.user and request.user.is_superuser:
@@ -256,24 +214,30 @@ class IpnView(OrderPlacementMixin, generic.View):
 
     def post(self, request, *args, **kwargs):
         try:
-            self.handle_ipn(request)
+            txn = self.handle_ipn(request)
         except PaymentError as inst:
             return HttpResponseBadRequest(inst.message)
+
+        #todo: send message to customer
+
+        logger.info("Transaction #%s has been proceeded", txn.id)
+
         return HttpResponse()
 
     def handle_ipn(self, request, **kwargs):
         """
-        Complete payment.
+        Complete payment. Register:
+            - transaction
+            - source
+            - payment event
+        :param request: request from IpnView
+        :return: None
         """
 
-        # TODO: SystemPay transaction should be linked to a Source as FK
-        # TODO: Facade shouldn't be used like this
-        # TODO: Check when order creation occurs
         # TODO: Avoid duplicate transaction / source / payment event
 
-        txn = Facade().set_txn(request)
         try:
-            pass
+            txn = Facade().set_txn(request)
         except SystemPayError:
             raise SystemPayError('Something went wrong with transaction.')
 
@@ -292,13 +256,15 @@ class IpnView(OrderPlacementMixin, generic.View):
         # We force here the allocated amount to be captured since SystemPay
         # doesn't send any notification on a capture event
         # (authorised = captured)
-        if txn.operation_type == SystemPayTransaction.OPERATION_TYPE_DEBIT:
+        if txn.operation_type == SystemPayTransaction.OPERATION_TYPE_DEBIT \
+                and not trans_status == CANCELLED:
             # if self.AUTHORISED in trans_status:
             # allocated = txn.amount
             # elif self.CAPTURED in trans_status:
             #     debited = txn.amount
             debited = txn.amount
-        elif txn.operation_type == SystemPayTransaction.OPERATION_TYPE_CREDIT:
+        elif txn.operation_type == SystemPayTransaction.OPERATION_TYPE_CREDIT \
+                and not trans_status == CANCELLED:
             # if self.AUTHORISED in trans_status:
             #     allocated = txn.amount
             # elif self.CAPTURED in trans_status:
@@ -321,3 +287,4 @@ class IpnView(OrderPlacementMixin, generic.View):
                                txn.amount, reference=txn.reference)
         self.save_payment_details(order)
 
+        return txn
