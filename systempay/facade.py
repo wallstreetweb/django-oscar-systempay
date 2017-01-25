@@ -9,9 +9,7 @@ from .gateway import Gateway
 from .models import SystemPayTransaction
 from systempay.forms import SystemPayNotificationForm
 from .utils import printable_form_errors, get_amount_from_systempay
-from .exceptions import (
-    SystemPayGatewayServerError, SystemPayGatewayParamError,
-    SystemPayGatewayPaymentRejected, SystemPayFormNotValid)
+from .exceptions import SystemPayFormNotValid, SystemPayResultError
 
 
 logger = logging.getLogger('systempay')
@@ -31,9 +29,6 @@ class Facade(object):
         )
         self.currency = getattr(settings, 'SYSTEMPAY_CURRENCY', 978)  # 978
         # stands for EURO (ISO 639-1)
-
-    def get_amount_from_systempay(self, form):
-        return get_amount_from_systempay(form.data.get('vads_amount', '0'))
 
     def get_result(self, form):
         return form.data.get('vads_result')
@@ -91,14 +86,17 @@ class Facade(object):
 
     def set_txn(self, request):
         """
-        Set a transaction from a SystemPay notification.
+        Set a transaction from an Instant Payment Notification (IPN).
+
+        :param request: request from Ipn View
+        :return: SystemPayTransaction object
         """
 
         form = SystemPayNotificationForm(request.POST)
 
         # create the transaction
         order_number = request.POST.get('vads_order_id')
-        amount = self.get_amount_from_systempay(form)
+        amount = get_amount_from_systempay(request.POST.get('vads_amount', '0'))
         txn = self.save_txn_notification(order_number, amount, request)
 
         if not form.is_valid():
@@ -122,25 +120,8 @@ class Facade(object):
                 _("Incorrect signature. Check SystemPayTransaction #%s "
                   "for more details") % txn.id)
 
-        # if not txn.is_complete():
-        #
-        #     if txn.result == '02':
-        #         raise SystemPayGatewayPaymentRejected(
-        #             "The shop must contact the bank")
-        #     elif txn.result == '05':
-        #         raise SystemPayGatewayPaymentRejected(
-        #             "The payment has been rejected")
-        #     elif txn.result == '30':
-        #         extra_result = self.get_extra_result(form)
-        #         raise SystemPayGatewayParamError(code=extra_result)
-        #     elif txn.result == '96':
-        #         raise SystemPayGatewayServerError(
-        #             "Technical error while processing the payment")
-        #     elif txn.result == '17':
-        #         raise
-        #     else:
-        #         raise SystemPayGatewayServerError(
-        #             "Unknown error: %s" % txn.result)
+        if not txn.result == '00':
+            raise SystemPayResultError(txn.result)
 
         return txn
 
@@ -160,10 +141,9 @@ class Facade(object):
 
     def save_txn(self, order_number, amount, data, mode):
         """
-        Save the transaction into the database to be able to track
-        everything we received.
+        Save the transaction into the database, submitted or received.
         """
-        # convert the QueryDict into a dict
+        # convert the QueryDict into a dict in case of POST data
         d = {}
         if isinstance(data, QueryDict):
             for k in data:

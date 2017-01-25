@@ -271,8 +271,9 @@ class IpnView(OrderPlacementMixin, generic.View):
         # TODO: Check when order creation occurs
         # TODO: Avoid duplicate transaction / source / payment event
 
+        txn = Facade().set_txn(request)
         try:
-            txn = Facade().set_txn(request)
+            pass
         except SystemPayError:
             raise SystemPayError('Something went wrong with transaction.')
 
@@ -293,7 +294,7 @@ class IpnView(OrderPlacementMixin, generic.View):
         # (authorised = captured)
         if txn.operation_type == SystemPayTransaction.OPERATION_TYPE_DEBIT:
             # if self.AUTHORISED in trans_status:
-                # allocated = txn.amount
+            # allocated = txn.amount
             # elif self.CAPTURED in trans_status:
             #     debited = txn.amount
             debited = txn.amount
