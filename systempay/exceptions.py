@@ -1,11 +1,3 @@
-class SystemPayError(Exception):
-    pass
-
-
-class SystemPayFormNotValid(SystemPayError):
-    pass
-
-
 VADS_RESULT = {
     '00': 'Action réalisée avec succès',
     '02': 'Le marchand doit contacter la banque du porteur. Déprécié.',
@@ -15,6 +7,14 @@ VADS_RESULT = {
           "valorisation du champ vads_extra_result.",
     '96': "Erreur technique.",
     }
+
+
+class SystemPayError(Exception):
+    pass
+
+
+class SystemPayFormNotValid(SystemPayError):
+    pass
 
 
 class SystemPayResultError(SystemPayError):

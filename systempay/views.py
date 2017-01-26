@@ -211,13 +211,13 @@ class IpnView(OrderPlacementMixin, generic.View):
 
     def post(self, request, *args, **kwargs):
         try:
-            txn = self.handle_ipn(request)
+            self.handle_ipn(request)
         except PaymentError as inst:
             return HttpResponseBadRequest(inst.message)
 
         #todo: send message to customer
 
-        return HttpResponse()
+        return HttpResponse('ok')
 
     def handle_ipn(self, request, **kwargs):
         """
