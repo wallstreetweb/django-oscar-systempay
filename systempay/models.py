@@ -2,6 +2,8 @@ from urllib.parse import parse_qs
 
 from django.db import models
 
+from .exceptions import VADS_RESULT
+
 CURRENCIES = (
     ('36', 'AUD'),
     ('036', 'AUD'),
@@ -133,4 +135,8 @@ class SystemPayTransaction(models.Model):
                         li.append(item.split('vads_')[1])
             res = li
         return sorted(res)
+
+    @property
+    def result_message(self):
+        return VADS_RESULT.get(self.result, '')
 

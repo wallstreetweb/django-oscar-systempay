@@ -29,11 +29,10 @@
                     <th>{% trans "Mode" %}</th>
                     <th>{% trans "Order N°" %}</th>
                     <th>{% trans "Op. Type" %}</th>
-                    <th>{% trans "Result" %}</th>
                     <th>{% trans "Amount" %}</th>
                     <th>{% trans "Date" %}</th>
-                    <th>{% trans "Error code" %}</th>
-                    <th>{% trans "Error message" %}</th>
+                    <th>{% trans "Result" %}</th>
+                    <th>{% trans "Message" %}</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,11 +42,10 @@
                         <td>{{ txn.mode }}</td>
                         <td>{{ txn.order_number }}</td>
                         <td>{{ txn.operation_type }}</td>
-                        <td>{{ txn.result }}</td>
                         <td>{{ txn.amount|currency:txn.currency }}</td>
                         <td>{{ txn.date_created }}</td>
-                        <td>{{ txn.error_code|default:'-' }}</td>
-                        <td>{{ txn.error_message|default:'-' }}</td>
+                        <td>{{ txn.result|default:'-' }}</td>
+                        <td>{{ txn.result_message }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
