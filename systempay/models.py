@@ -85,11 +85,9 @@ class SystemPayTransaction(models.Model):
     def _as_table(params):
         rows = []
         for k, v in sorted(params.items()):
-            rows.append('<tr><th>%s</th><td>%s</td></tr>' % (k, v))
+            if v[0]:
+                rows.append('<tr><th>%s</th><td>%s</td></tr>' % (k, v[0]))
         return '<table>%s</table>' % ''.join(rows)
-
-    def as_table(self):
-        return self._as_table(self.__dict__)
 
     @property
     def context(self):
