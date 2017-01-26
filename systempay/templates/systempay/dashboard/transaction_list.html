@@ -41,7 +41,7 @@
                         <td><a href="{% url 'systempay-detail' txn.id %}">{{ txn.trans_id|default:"-" }}</a></td>
                         <td>{{ txn.mode }}</td>
                         <td>{{ txn.order_number }}</td>
-                        <td>{{ txn.operation_type }}</td>
+                        <td>{{ txn.operation_type|default:"-" }}</td>
                         <td>{{ txn.amount|currency:txn.currency }}</td>
                         <td>{{ txn.date_created }}</td>
                         <td>{{ txn.result|default:'-' }}</td>
