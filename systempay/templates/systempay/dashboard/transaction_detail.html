@@ -34,9 +34,10 @@
             <tr><th>{% trans "Amount" %}</th><td>{{ txn.amount|default:"-" }}</td></tr>
             <tr><th>{% trans "Currency" %}</th><td>{{ txn.currency }}</td></tr>
             <tr><th>{% trans "Result" %}</th><td>{{ txn.result }}</td></tr>
+            <tr><th>{% trans "Status" %}</th><td>{{ txn.trans_status|default:"-" }}</td></tr>
             <tr><th>{% trans "Message" %}</th><td>{{ txn.result_message|default:"-" }}</td></tr>
             <tr><th>{% trans "Request params" %}</th><td>{{ txn.request|safe }}</td></tr>
-{#            <tr><th>{% trans "Response params" %}</th><td>{{ txn.raw_request|safe }}</td></tr>#}
+            <tr><th>{% trans "Response params" %}</th><td>{{ txn.raw_request|safe }}</td></tr>
         </tbody>
     </table>
 {% endblock dashboard_content %}

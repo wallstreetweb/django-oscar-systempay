@@ -136,5 +136,10 @@ class SystemPayTransaction(models.Model):
 
     @property
     def result_message(self):
-        return VADS_RESULT.get(self.result, '')
+        result = self.result or ''
+        return '%s - %s' % (result, VADS_RESULT.get(self.result, ''))
+
+    @property
+    def trans_status(self):
+        return self.value('vads_trans_status')
 

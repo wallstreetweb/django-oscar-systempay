@@ -31,7 +31,7 @@
                     <th>{% trans "Op. Type" %}</th>
                     <th>{% trans "Amount" %}</th>
                     <th>{% trans "Date" %}</th>
-                    <th>{% trans "Result" %}</th>
+                    <th>{% trans "Status" %}</th>
                     <th>{% trans "Message" %}</th>
                 </tr>
             </thead>
@@ -44,8 +44,8 @@
                         <td>{{ txn.operation_type|default:"-" }}</td>
                         <td>{{ txn.amount|currency:txn.currency }}</td>
                         <td>{{ txn.date_created }}</td>
-                        <td>{{ txn.result|default:'-' }}</td>
-                        <td>{{ txn.result_message }}</td>
+                        <td>{{ txn.trans_status|default:"-" }}</td>
+                        <td>{{ txn.result_message}}</td>
                     </tr>
                 {% endfor %}
             </tbody>
