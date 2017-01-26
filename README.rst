@@ -47,6 +47,8 @@ Start by adding `systempay` to your `INSTALLED_APPS` settings:
 
 **Create an app file in your project as following:**
 
+This will link both dashboard systempay app and main systempay app to
+your project.
 
 .. code:: python
 
@@ -64,6 +66,7 @@ Start by adding `systempay` to your `INSTALLED_APPS` settings:
 
             urls += [
                 url(r'^systempay/', include(self.systempay_app.urls)),
+                url(r'^dashboard/systempay/', include(systempay_dashboard.urls)),
             ]
             return urls
 
@@ -102,10 +105,33 @@ it correctly before testing.
     site.save()
 
 
+Add SystemPay to your Dashboard
+-------------------------------
+
+**Configure your urls.py to match the systempay app url as explained below.**
+
+in your settings:
+
+.. code:: python
+
+    # Dashboard navigation
+    OSCAR_DASHBOARD_NAVIGATION += [
+        {
+            'label': _('Transactions'),
+            'icon': 'icon-book',
+            'children': [
+                {
+                    'label': 'SystemPay',
+                    'url_name': 'systempay-list',
+                    },
+                ]
+        },
+        ]
+
+
 Requirements
 ------------
 
 `Django-oscar-systempay` is compatible with Python 3 and Django 1.9. No test
 has been done on Python 2.7 for now.
-
 
