@@ -277,6 +277,11 @@ class IpnView(OrderPlacementMixin, generic.View):
                         amount_refunded=refunded,
                         reference=txn.reference)
 
+        # Update order status to 'being processed'
+        handler = EventHandler()
+        handler.handle_order_status_change(
+            order, getattr(settings, 'OSCAR_STATUS_BEING_PROCESSED', None))
+
         self.add_payment_source(source)
         self.add_payment_event(payment_event,
                                txn.amount, reference=txn.reference)
