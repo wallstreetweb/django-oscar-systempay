@@ -1,4 +1,4 @@
 include *.rst
 include LICENSE
 recursive-include systempay/templates *.html
-recursive-include systempay/static/ *.gif *.jpg
+recursive-include systempay/static *.gif *.jpg
