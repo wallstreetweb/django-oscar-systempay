@@ -111,13 +111,18 @@ class PlaceOrderView(PaymentDetailsView):
         Override this view if you want to perform custom actions when an
         order is submitted.
         """
-        # Send confirmation message (normally an email)
-        # if send_confirmation_message:
-        #     self.send_confirmation_message(order)
+        if send_confirmation_message:
+            self.send_confirmation_message(order, self.communication_type_code)
 
+        # Flush all session data
+        self.checkout_session.flush()
+
+        # Save order id in session so thank-you page can load it
         self.request.session['checkout_order_id'] = order.id
 
-        return HttpResponseRedirect(self.get_success_url())
+        response = HttpResponseRedirect(self.get_success_url())
+        self.send_signal(self.request, response, order)
+        return response
 
     def get_success_url(self):
         return reverse('systempay:secure-redirect')
