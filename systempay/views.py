@@ -279,8 +279,7 @@ class IpnView(OrderPlacementMixin, generic.View):
 
         # Update order status to 'being processed'
         handler = EventHandler()
-        handler.handle_order_status_change(
-            order, getattr(settings, 'OSCAR_STATUS_BEING_PROCESSED', None))
+        handler.handle_order_status_change(order, getattr(settings, 'OSCAR_STATUS_BEING_PROCESSED', ''))
 
         self.add_payment_source(source)
         self.add_payment_event(payment_event,
